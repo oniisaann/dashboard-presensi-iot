@@ -15,7 +15,4 @@ jobs:
           # Perintah untuk menghapus folder data_web (Dashboard)
           curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/data_web.json"
           
-          # Perintah untuk menghapus folder data_sheet (Antrian Sinkronisasi)
-          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/data_sheet.json"
-          
           echo "Pembersihan Cloud Berhasil!"
