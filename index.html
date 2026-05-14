@@ -55,7 +55,7 @@
         tr:hover { background: #f8fafc; }
 
         .badge-live { display: inline-block; padding: 5px 10px; background: #dcfce7; color: #166534; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 15px; }
-	.status-realtime { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        .status-realtime { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
         .status-sync { background: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
     </style>
 </head>
@@ -84,22 +84,25 @@
             <h1>☁️ Presensi Cloud</h1>
             <p>SMA Muhammadiyah Sumowono</p>
         </div>
-`	<div id="device-pill" class="badge" style="background: #e2e8f0; color: #64748b;">
-        Device: <span id="device-status">Checking...</span>
-    	</div>
+        <div id="device-pill" class="badge" style="background: #e2e8f0; color: #64748b; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;">
+            Device: <span id="device-status">Checking...</span>
+        </div>
         <button class="btn-logout" onclick="lakukanLogout()">LOGOUT</button>
     </div>
 
     <div class="card">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div class="badge-live">🟢 LIVE DATA FIREBASE</div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <div style="font-size: 13px; color: var(--text-light);">Total: <span id="total-absen" style="font-weight: bold; color: var(--text-dark);">0</span></div>
-            <button onclick="downloadCSV()" style="padding: 5px 10px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">
-                📥 DOWNLOAD CSV
-            </button>
+            <div class="badge-live">🟢 LIVE DATA FIREBASE</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="font-size: 13px; color: var(--text-light);">Total: <span id="total-absen" style="font-weight: bold; color: var(--text-dark);">0</span></div>
+                <button onclick="downloadCSV()" style="padding: 5px 10px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">
+                    📥 DOWNLOAD CSV
+                </button>
+                <button onclick="hapusSemua()" style="padding: 5px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">
+                    🗑️ HAPUS SEMUA
+                </button>
+            </div>
         </div>
-    </div>
         <div class="table-container">
             <table>
                 <thead>
@@ -107,10 +110,11 @@
                         <th>Nama Siswa</th>
                         <th>Waktu Tap</th>
                         <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="tabel-data">
-                    <tr><td colspan="2" style="text-align: center; color: #94a3b8;">Menghubungkan ke server...</td></tr>
+                    <tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan ke server...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -131,60 +135,54 @@
         const pass = document.getElementById("in-pass").value;
 
         if (user === USER_VALID && pass === PASS_VALID) {
-            // Jika Benar: Sembunyikan Login, Tampilkan Dashboard
             document.getElementById("login-screen").style.display = "none";
             document.getElementById("dashboard-screen").style.display = "block";
             
-            // Ubah alignment body agar dashboard tampil di atas, bukan di tengah
             document.body.style.alignItems = "flex-start"; 
             
-            // Mulai tarik data dari Firebase SEKARANG (Bukan sebelum login)
             ambilDataFirebase();
             intervalSync = setInterval(ambilDataFirebase, 5000);
         } else {
-            // Jika Salah: Tampilkan pesan error merah
             document.getElementById("login-error").style.display = "block";
         }
     }
 
-    // Memicu login saat tombol "Enter" ditekan di kolom password
     document.getElementById("in-pass").addEventListener("keypress", function(event) {
         if (event.key === "Enter") cekLogin();
     });
 
     // --- FUNGSI LOGOUT ---
     function lakukanLogout() {
-        // Hentikan penarikan data Firebase agar hemat kuota
         clearInterval(intervalSync); 
         
-        // Kosongkan form input
         document.getElementById("in-user").value = "";
         document.getElementById("in-pass").value = "";
         document.getElementById("login-error").style.display = "none";
         
-        // Kembalikan tampilan ke Halaman Login
         document.getElementById("dashboard-screen").style.display = "none";
         document.getElementById("login-screen").style.display = "block";
         document.body.style.alignItems = "center"; 
     }
 
-    // --- FUNGSI TARIK DATA FIREBASE (Sama seperti sebelumnya) ---
+    // --- FUNGSI TARIK DATA FIREBASE (DIPERBARUI) ---
     function ambilDataFirebase() {
         fetch(firebaseUrl)
             .then(res => res.json())
             .then(data => {
                 const tbody = document.getElementById('tabel-data');
                 if (!data) {
-                    tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
                     document.getElementById('total-absen').innerText = "0";
                     return;
                 }
-                const arrayData = Object.values(data).reverse();
-                document.getElementById('total-absen').innerText = arrayData.length;
+                
+                // Gunakan Object.keys agar kita mendapatkan ID unik Firebase untuk fitur Hapus
+                const arrayKeys = Object.keys(data).reverse();
+                document.getElementById('total-absen').innerText = arrayKeys.length;
 
                 let html = '';
-                arrayData.forEach(item => {
-                    // Cek status, jika kosong (data lama) anggap Realtime
+                arrayKeys.forEach(key => {
+                    let item = data[key];
                     let statusTeks = item.status || "Realtime ⚡"; 
                     let statusClass = statusTeks.includes("Sync") ? "status-sync" : "status-realtime";
 
@@ -195,6 +193,9 @@
                             <td style="text-align: center;">
                                 <span class="${statusClass}">${statusTeks}</span>
                             </td>
+                            <td style="text-align: center;">
+                                <button onclick="hapusSatu('${key}')" style="border:none; background:transparent; color:#dc2626; cursor:pointer; font-size:16px;" title="Hapus Data ini">✕</button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -202,10 +203,46 @@
             })
             .catch(err => {
                 console.error("Error:", err);
-                document.getElementById('tabel-data').innerHTML = '<tr><td colspan="2" style="text-align:center; color: red;">Gagal terhubung ke database.</td></tr>';
+                document.getElementById('tabel-data').innerHTML = '<tr><td colspan="4" style="text-align:center; color: red;">Gagal terhubung ke database.</td></tr>';
             });
     }
-function cekDeviceOnline() {
+
+    // --- FUNGSI HAPUS SATU DATA ---
+    function hapusSatu(key) {
+        if (confirm("Apakah Anda yakin ingin menghapus data presensi ini?")) {
+            // Kita ubah URL dari .json menjadi /key.json untuk menghapus data spesifik
+            const urlHapus = firebaseUrl.replace('.json', '/' + key + '.json');
+            
+            fetch(urlHapus, { method: 'DELETE' })
+                .then(res => {
+                    if (res.ok) {
+                        ambilDataFirebase(); // Refresh tabel setelah dihapus
+                    } else {
+                        alert("Gagal menghapus data!");
+                    }
+                })
+                .catch(err => alert("Error: " + err));
+        }
+    }
+
+    // --- FUNGSI HAPUS SEMUA DATA ---
+    function hapusSemua() {
+        if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Cloud? Data yang dihapus tidak bisa dikembalikan!")) {
+            fetch(firebaseUrl, { method: 'DELETE' })
+                .then(res => {
+                    if (res.ok) {
+                        alert("Semua data berhasil dihapus dari Cloud!");
+                        ambilDataFirebase(); // Refresh tabel
+                    } else {
+                        alert("Gagal menghapus semua data!");
+                    }
+                })
+                .catch(err => alert("Error: " + err));
+        }
+    }
+
+    // --- CEK DEVICE ONLINE ---
+    function cekDeviceOnline() {
         const statusUrl = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/device_status.json";
         
         fetch(statusUrl)
@@ -213,40 +250,35 @@ function cekDeviceOnline() {
             .then(data => {
                 if (!data) return;
 
-                // --- PERBAIKAN BUG ZONA WAKTU ---
-                // Kurangi 25200 detik (7 jam) dari data Wemos agar kembali ke UTC murni
                 const lastSeen = data.last_seen - 25200; 
-                const sekarang = Math.floor(Date.now() / 1000); // UTC Murni dari Browser
+                const sekarang = Math.floor(Date.now() / 1000);
                 const selisih = sekarang - lastSeen;
 
                 const statusEl = document.getElementById("device-status");
                 const pillEl = document.getElementById("device-pill");
 
-                // Jika selisih antara 0 sampai 40 detik = ONLINE
                 if (selisih >= 0 && selisih < 20) {
                     statusEl.innerText = "ONLINE";
                     pillEl.style.background = "#dcfce7";
                     pillEl.style.color = "#166534";
                 } else {
-                    // Jika selisih lebih dari 40 detik = OFFLINE
                     statusEl.innerText = "OFFLINE";
                     pillEl.style.background = "#fee2e2";
                     pillEl.style.color = "#991b1b";
                 }
             })
             .catch(err => {
-                // Jika web gagal menghubungi Firebase (misal laptop Anda yang putus internet)
                 document.getElementById("device-status").innerText = "OFFLINE";
                 document.getElementById("device-pill").style.background = "#fee2e2";
                 document.getElementById("device-pill").style.color = "#991b1b";
             });
     }
 
-// Panggil di dalam interval yang sudah ada atau buat baru
-setInterval(cekDeviceOnline, 5000); // Cek status device setiap 10 detik
-cekDeviceOnline();
+    setInterval(cekDeviceOnline, 5000);
+    cekDeviceOnline();
 
-function downloadCSV() {
+    // --- DOWNLOAD CSV ---
+    function downloadCSV() {
         fetch(firebaseUrl)
             .then(res => res.json())
             .then(data => {
@@ -255,27 +287,21 @@ function downloadCSV() {
                     return;
                 }
 
-                // 1. Ambil data dan urutkan (Terbaru di bawah untuk laporan)
                 const arrayData = Object.values(data);
-                
-                // 2. Buat Header CSV
                 let csvContent = "Nama Siswa,Waktu Tap,Status\n";
 
-                // 3. Masukkan data baris demi baris
                 arrayData.forEach(item => {
-                    let nama = item.nama.replace(/,/g, ""); // Hapus koma di nama agar tidak merusak CSV
+                    let nama = item.nama.replace(/,/g, ""); 
                     let waktu = item.waktu;
-                    let status = (item.status || "Realtime").replace(/⚡|🔄/g, "").trim(); // Bersihkan emoji
+                    let status = (item.status || "Realtime").replace(/⚡|🔄/g, "").trim(); 
                     
                     csvContent += `${nama},${waktu},${status}\n`;
                 });
 
-                // 4. Proses Download di Browser
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement("a");
                 const url = URL.createObjectURL(blob);
                 
-                // Penamaan file otomatis dengan tanggal hari ini
                 const tgl = new Date().toLocaleDateString('id-ID').replace(/\//g, '-');
                 link.setAttribute("href", url);
                 link.setAttribute("download", `Rekap_Cloud_${tgl}.csv`);
@@ -287,7 +313,6 @@ function downloadCSV() {
             })
             .catch(err => alert("Gagal mengambil data untuk download."));
     }
-
 </script>
 
 </body>
