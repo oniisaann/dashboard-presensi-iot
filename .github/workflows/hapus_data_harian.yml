@@ -1,0 +1,21 @@
+name: Pembersihan Firebase Harian
+
+on:
+  schedule:
+    # Jam 22:00 UTC sama dengan Jam 05:00 WIB
+    - cron: '0 22 * * *'
+  workflow_dispatch: # Agar Anda bisa mencoba hapus manual dari tombol di GitHub
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Menghapus Data Realtime Database
+        run: |
+          # Perintah untuk menghapus folder data_web (Dashboard)
+          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/data_web.json"
+          
+          # Perintah untuk menghapus folder data_sheet (Antrian Sinkronisasi)
+          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/data_sheet.json"
+          
+          echo "Pembersihan Cloud Berhasil!"
