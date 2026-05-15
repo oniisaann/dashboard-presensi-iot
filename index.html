@@ -120,6 +120,24 @@
         </div>
     </div>
 </div>
+<div class="card" style="margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px;">
+    <h3>📂 Arsip Presensi Harian</h3>
+    <p>Pilih tanggal untuk melihat atau mendownload rekap absensi dari Google Sheets.</p>
+    
+    <select id="pilih-tanggal" style="padding: 8px; border-radius: 5px;">
+        <option value="">-- Memuat Tanggal... --</option>
+    </select>
+    
+    <button onclick="lihatDataHarian()" style="padding: 8px 15px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer;">👁️ Lihat Data</button>
+    <button onclick="downloadCSVHarian()" style="padding: 8px 15px; background: #059669; color: white; border: none; border-radius: 5px; cursor: pointer;">📥 Download CSV</button>
+
+    <div style="overflow-x: auto; margin-top: 15px;">
+        <table border="1" style="width: 100%; border-collapse: collapse; text-align: center;" id="tabel-arsip">
+            <tbody id="isi-arsip">
+                </tbody>
+        </table>
+    </div>
+</div>
 
 <script>
     // --- KONFIGURASI ---
@@ -313,6 +331,89 @@
             })
             .catch(err => alert("Gagal mengambil data untuk download."));
     }
+    const FIREBASE_URL = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/";
+let dataHarianSaatIni = []; // Variabel penampung untuk fitur download
+
+// 1. Fungsi mengambil daftar nama sheet (tanggal) dari Firebase
+function loadDaftarTanggal() {
+    fetch(FIREBASE_URL + "rekap_harian.json")
+        .then(response => response.json())
+        .then(data => {
+            let select = document.getElementById('pilih-tanggal');
+            select.innerHTML = '<option value="">-- Pilih Tanggal --</option>';
+            
+            if(data) {
+                // Looping nama folder/sheet dari Firebase (misal: ABSEN_16May2026)
+                for(let namaSheet in data) {
+                    // Tampilkan di dropdown, hapus kata "ABSEN_" agar lebih rapi
+                    let tanggalBersih = namaSheet.replace('ABSEN_', '');
+                    select.innerHTML += `<option value="${namaSheet}">${tanggalBersih}</option>`;
+                }
+            } else {
+                select.innerHTML = '<option value="">Belum ada arsip data</option>';
+            }
+        }).catch(err => console.log("Gagal memuat tanggal:", err));
+}
+
+// 2. Fungsi untuk menampilkan data ke tabel saat tombol "Lihat Data" diklik
+function lihatDataHarian() {
+    let namaSheet = document.getElementById('pilih-tanggal').value;
+    if(!namaSheet) return alert("Silakan pilih tanggal terlebih dahulu!");
+
+    document.getElementById('isi-arsip').innerHTML = "<tr><td>Memuat data...</td></tr>";
+
+    // Panggil data spesifik berdasarkan tanggal yang dipilih
+    fetch(FIREBASE_URL + "rekap_harian/" + namaSheet + ".json")
+        .then(response => response.json())
+        .then(dataArray => {
+            if(!dataArray) return document.getElementById('isi-arsip').innerHTML = "<tr><td>Data kosong</td></tr>";
+            
+            dataHarianSaatIni = dataArray; // Simpan ke memori untuk di-download nanti
+            let tbody = document.getElementById('isi-arsip');
+            tbody.innerHTML = ""; // Bersihkan isi tabel lama
+
+            // Google Sheets mengirim data berupa Array 2D (Baris dan Kolom)
+            dataArray.forEach((baris, indexRow) => {
+                let tr = document.createElement('tr');
+                
+                baris.forEach(kolom => {
+                    // Jika ini baris 1 atau 2 (Biasanya Header/Judul Mapel), jadikan cetak tebal (th)
+                    let cell = (indexRow < 2) ? document.createElement('th') : document.createElement('td');
+                    cell.style.padding = "8px";
+                    cell.innerText = kolom;
+                    tr.appendChild(cell);
+                });
+                
+                tbody.appendChild(tr);
+            });
+        });
+}
+
+// 3. Fungsi untuk menyusun Array kembali menjadi File CSV dan men-downloadnya
+function downloadCSVHarian() {
+    if(dataHarianSaatIni.length === 0) return alert("Silakan klik 'Lihat Data' terlebih dahulu sebelum mendownload!");
+    
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    // Gabungkan setiap kolom dengan koma, dan setiap baris dengan Enter (\n)
+    dataHarianSaatIni.forEach(rowArray => {
+        let row = rowArray.join(","); 
+        csvContent += row + "\r\n";
+    });
+
+    // Proses Pembuatan File Otomatis
+    let namaFile = document.getElementById('pilih-tanggal').value + ".csv";
+    let encodedUri = encodeURI(csvContent);
+    let link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", namaFile);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Panggil otomatis fungsi loadDaftarTanggal() saat web pertama kali dibuka
+window.addEventListener('load', loadDaftarTanggal);
 </script>
 
 </body>
