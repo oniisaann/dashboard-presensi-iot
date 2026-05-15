@@ -144,32 +144,47 @@
     </div>
 
     <div class="card">
-        <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 20px;">Pilih tanggal untuk melihat atau mendownload rekap absensi dari Google Sheets secara langsung tanpa membebani Firebase.</p>
+    <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 20px;">
+        Pilih tanggal untuk melihat, mendownload, atau mengirim rekap absensi.
+    </p>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
         
-        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-            <select id="pilih-tanggal" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; font-family: inherit; font-size: 14px;">
-                <option value="">-- Memuat Tanggal... --</option>
-            </select>
-            
-            <button onclick="lihatDataHarian()" style="padding: 8px 15px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">👁️ Lihat Data</button>
-            <button onclick="downloadCSVHarian()" style="padding: 8px 15px; background: #059669; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">📥 Download CSV</button>
-            <span style="color: #cbd5e1;">|</span>
-            <input type="email" id="input-email-id" placeholder="Masukkan alamat Email..." style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; font-family: inherit; font-size: 14px; width: 220px;">
-            <button onclick="kirimKeEmail(this)" style="padding: 8px 15px; background: #ea4335; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">📧 Kirim ke Email</button>
-            <button onclick="window.open('https://docs.google.com/spreadsheets/d/1cg5meD7TcG0ULqDssanKtXdLTAJRNpOevxbcPkq1F_s/edit?gid=0#gid=0', '_blank')" 
-            style="background-color: #0f9d58; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold;">
-            🟢 Buka Google Sheets
+        <select id="pilih-tanggal" style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; min-width: 150px;">
+            <option value="">-- Pilih Tanggal --</option>
+        </select>
+        
+        <button onclick="lihatDataHarian()" style="padding: 10px 15px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+            👁️ Lihat Data
+        </button>
+
+        <button onclick="downloadCSVHarian()" style="padding: 10px 15px; background: #059669; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+            📥 Download
+        </button>
+
+        <button onclick="window.open('https://docs.google.com/spreadsheets/d/1cg5meD7TcG0ULqDssanKtXdLTAJRNpOevxbcPkq1F_s/edit?gid=0#gid=0', '_blank')" 
+                style="padding: 10px 15px; background: #0f9d58; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+            🟢 G-Sheets
+        </button>
+
+        <div style="width: 1px; height: 30px; background: #e2e8f0; margin: 0 5px;"></div>
+
+        <div style="display: flex; gap: 5px;">
+            <input type="email" id="input-email-id" placeholder="Alamat Email..." style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 200px; font-size: 13px;">
+            <button onclick="kirimKeEmail(this)" style="padding: 10px 15px; background: #ea4335; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                📧 Kirim
             </button>
         </div>
-
-        <div class="table-container">
-            <table style="text-align: center;">
-                <tbody id="isi-arsip">
-                    <tr><td style="padding: 30px; color: #94a3b8;">Silakan pilih tanggal di atas dan klik "Lihat Data"</td></tr>
-                </tbody>
-            </table>
-        </div>
     </div>
+
+    <div class="table-container">
+        <table style="text-align: center;">
+            <tbody id="isi-arsip">
+                <tr><td style="padding: 30px; color: #94a3b8;">Silakan pilih tanggal dan klik "Lihat Data"</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 </div>
 
 <script>
