@@ -1,0 +1,14 @@
+name: Reset Rekap Mingguan
+
+on:
+  schedule:
+    - cron: '0 22 * * 0' # Jam 05:00 WIB cuma hari Minggu
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hapus Rekap Harian
+        run: |
+          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/rekap_harian.json"
