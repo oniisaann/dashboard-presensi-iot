@@ -120,24 +120,27 @@
         </div>
     </div>
 </div>
-<div class="card" style="margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 8px;">
-    <h3>📂 Arsip Presensi Harian</h3>
-    <p>Pilih tanggal untuk melihat atau mendownload rekap absensi dari Google Sheets.</p>
-    
-    <select id="pilih-tanggal" style="padding: 8px; border-radius: 5px;">
-        <option value="">-- Memuat Tanggal... --</option>
-    </select>
-    
-    <button onclick="lihatDataHarian()" style="padding: 8px 15px; background: #2563eb; color: white; border: none; border-radius: 5px; cursor: pointer;">👁️ Lihat Data</button>
-    <button onclick="downloadCSVHarian()" style="padding: 8px 15px; background: #059669; color: white; border: none; border-radius: 5px; cursor: pointer;">📥 Download CSV</button>
+<div class="card" style="margin-top: 30px;">
+        <h3 style="color: #1e293b; margin-bottom: 5px;">📂 Arsip Presensi Harian</h3>
+        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Pilih tanggal untuk melihat atau mendownload rekap absensi dari Google Sheets.</p>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <select id="pilih-tanggal" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; font-family: inherit; font-size: 14px;">
+                <option value="">-- Memuat Tanggal... --</option>
+            </select>
+            
+            <button onclick="lihatDataHarian()" style="padding: 8px 15px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">👁️ Lihat Data</button>
+            <button onclick="downloadCSVHarian()" style="padding: 8px 15px; background: #059669; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">📥 Download CSV</button>
+        </div>
 
-    <div style="overflow-x: auto; margin-top: 15px;">
-        <table border="1" style="width: 100%; border-collapse: collapse; text-align: center;" id="tabel-arsip">
-            <tbody id="isi-arsip">
+        <div class="table-container" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px;">
+                <tbody id="isi-arsip">
+                    <tr><td style="padding: 20px; color: #94a3b8;">Silakan pilih tanggal dan klik "Lihat Data"</td></tr>
                 </tbody>
-        </table>
+            </table>
+        </div>
     </div>
-</div>
 
 <script>
     // --- KONFIGURASI ---
@@ -376,10 +379,21 @@ function lihatDataHarian() {
             dataArray.forEach((baris, indexRow) => {
                 let tr = document.createElement('tr');
                 
-                baris.forEach(kolom => {
-                    // Jika ini baris 1 atau 2 (Biasanya Header/Judul Mapel), jadikan cetak tebal (th)
+               baris.forEach(kolom => {
                     let cell = (indexRow < 2) ? document.createElement('th') : document.createElement('td');
-                    cell.style.padding = "8px";
+                    
+                    // Tambahkan style garis dan padding agar mirip tabel Vercel Anda
+                    cell.style.padding = "10px";
+                    cell.style.border = "1px solid #e2e8f0"; // Garis pembatas halus
+                    
+                    // Beri warna latar abu-abu terang khusus untuk baris header (baris 1 & 2)
+                    if(indexRow < 2) {
+                        cell.style.backgroundColor = "#f8fafc";
+                        cell.style.color = "#334155";
+                    } else {
+                        cell.style.color = "#475569";
+                    }
+                    
                     cell.innerText = kolom;
                     tr.appendChild(cell);
                 });
