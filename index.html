@@ -39,12 +39,19 @@
         .btn-login:hover { background: #0284c7; }
         #login-error { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
 
-        /* --- STYLE UNTUK DASHBOARD --- */
-        #dashboard-screen { width: 100%; max-width: 600px; display: none; } /* Disembunyikan awalnya */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        /* --- STYLE DASHBOARD & ARSIP --- */
+        #dashboard-screen { width: 100%; max-width: 650px; display: none; }
+        #arsip-screen { width: 100%; max-width: 800px; display: none; } /* Kamar baru untuk Arsip */
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;}
         .header h1 { margin: 0; font-size: 20px; color: var(--primary); }
         .header p { margin: 5px 0 0 0; color: var(--text-light); font-size: 13px; }
-        .btn-logout { background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;}
+        
+        /* Tombol Navigasi Atas */
+        .header-buttons { display: flex; gap: 10px; align-items: center; }
+        .btn-nav { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s;}
+        .btn-nav:hover { background: #e2e8f0; }
+        .btn-logout { background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s;}
         .btn-logout:hover { background: var(--danger); color: white; }
         
         .card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
@@ -84,10 +91,13 @@
             <h1>☁️ Presensi Cloud</h1>
             <p>SMA Muhammadiyah Sumowono</p>
         </div>
-        <div id="device-pill" class="badge" style="background: #e2e8f0; color: #64748b; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;">
-            Device: <span id="device-status">Checking...</span>
+        <div class="header-buttons">
+            <div id="device-pill" style="background: #e2e8f0; color: #64748b; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;">
+                Device: <span id="device-status">Checking...</span>
+            </div>
+            <button class="btn-nav" onclick="bukaMenuArsip()">📂 Arsip Google Sheets</button>
+            <button class="btn-logout" onclick="lakukanLogout()">LOGOUT</button>
         </div>
-        <button class="btn-logout" onclick="lakukanLogout()">LOGOUT</button>
     </div>
 
     <div class="card">
@@ -120,9 +130,21 @@
         </div>
     </div>
 </div>
-<div class="card" style="margin-top: 30px;">
-        <h3 style="color: #1e293b; margin-bottom: 5px;">📂 Arsip Presensi Harian</h3>
-        <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Pilih tanggal untuk melihat atau mendownload rekap absensi dari Google Sheets.</p>
+
+<div id="arsip-screen">
+    <div class="header">
+        <div>
+            <h1>📂 Arsip Presensi Harian</h1>
+            <p>Database Backup dari Google Sheets</p>
+        </div>
+        <div class="header-buttons">
+            <button class="btn-nav" onclick="kembaliKeDashboard()">⬅️ Kembali ke Live Data</button>
+            <button class="btn-logout" onclick="lakukanLogout()">LOGOUT</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 20px;">Pilih tanggal untuk melihat atau mendownload rekap absensi dari Google Sheets secara langsung tanpa membebani Firebase.</p>
         
         <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
             <select id="pilih-tanggal" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; font-family: inherit; font-size: 14px;">
@@ -133,22 +155,36 @@
             <button onclick="downloadCSVHarian()" style="padding: 8px 15px; background: #059669; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px;">📥 Download CSV</button>
         </div>
 
-        <div class="table-container" style="overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px;">
-            <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 14px;">
+        <div class="table-container">
+            <table style="text-align: center;">
                 <tbody id="isi-arsip">
-                    <tr><td style="padding: 20px; color: #94a3b8;">Silakan pilih tanggal dan klik "Lihat Data"</td></tr>
+                    <tr><td style="padding: 30px; color: #94a3b8;">Silakan pilih tanggal di atas dan klik "Lihat Data"</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
+</div>
 
 <script>
     // --- KONFIGURASI ---
     const USER_VALID = "admin2026";
     const PASS_VALID = "2026maju";
-    const firebaseUrl = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/data_web.json";
+    const FIREBASE_URL = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/";
+    const urlDataWeb = FIREBASE_URL + "data_web.json";
     
-    let intervalSync; // Variabel untuk menyimpan timer auto-refresh
+    let intervalSync; 
+    let dataHarianSaatIni = []; 
+
+    // --- FUNGSI NAVIGASI ANTAR LAYAR ---
+    function bukaMenuArsip() {
+        document.getElementById("dashboard-screen").style.display = "none";
+        document.getElementById("arsip-screen").style.display = "block";
+    }
+
+    function kembaliKeDashboard() {
+        document.getElementById("arsip-screen").style.display = "none";
+        document.getElementById("dashboard-screen").style.display = "block";
+    }
 
     // --- FUNGSI LOGIN ---
     function cekLogin() {
@@ -163,6 +199,7 @@
             
             ambilDataFirebase();
             intervalSync = setInterval(ambilDataFirebase, 5000);
+            loadDaftarTanggal(); // Muat daftar tanggal di latar belakang
         } else {
             document.getElementById("login-error").style.display = "block";
         }
@@ -180,14 +217,16 @@
         document.getElementById("in-pass").value = "";
         document.getElementById("login-error").style.display = "none";
         
+        // Sembunyikan semua layar konten, tampilkan login
         document.getElementById("dashboard-screen").style.display = "none";
+        document.getElementById("arsip-screen").style.display = "none";
         document.getElementById("login-screen").style.display = "block";
         document.body.style.alignItems = "center"; 
     }
 
-    // --- FUNGSI TARIK DATA FIREBASE (DIPERBARUI) ---
+    // --- FUNGSI TARIK DATA FIREBASE (LIVE) ---
     function ambilDataFirebase() {
-        fetch(firebaseUrl)
+        fetch(urlDataWeb)
             .then(res => res.json())
             .then(data => {
                 const tbody = document.getElementById('tabel-data');
@@ -197,7 +236,6 @@
                     return;
                 }
                 
-                // Gunakan Object.keys agar kita mendapatkan ID unik Firebase untuk fitur Hapus
                 const arrayKeys = Object.keys(data).reverse();
                 document.getElementById('total-absen').innerText = arrayKeys.length;
 
@@ -228,49 +266,27 @@
             });
     }
 
-    // --- FUNGSI HAPUS SATU DATA ---
+    // --- FUNGSI HAPUS DATA LIVE ---
     function hapusSatu(key) {
         if (confirm("Apakah Anda yakin ingin menghapus data presensi ini?")) {
-            // Kita ubah URL dari .json menjadi /key.json untuk menghapus data spesifik
-            const urlHapus = firebaseUrl.replace('.json', '/' + key + '.json');
-            
-            fetch(urlHapus, { method: 'DELETE' })
-                .then(res => {
-                    if (res.ok) {
-                        ambilDataFirebase(); // Refresh tabel setelah dihapus
-                    } else {
-                        alert("Gagal menghapus data!");
-                    }
-                })
-                .catch(err => alert("Error: " + err));
+            const urlHapus = urlDataWeb.replace('.json', '/' + key + '.json');
+            fetch(urlHapus, { method: 'DELETE' }).then(res => { if (res.ok) ambilDataFirebase(); else alert("Gagal!"); });
         }
     }
 
-    // --- FUNGSI HAPUS SEMUA DATA ---
     function hapusSemua() {
-        if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Cloud? Data yang dihapus tidak bisa dikembalikan!")) {
-            fetch(firebaseUrl, { method: 'DELETE' })
-                .then(res => {
-                    if (res.ok) {
-                        alert("Semua data berhasil dihapus dari Cloud!");
-                        ambilDataFirebase(); // Refresh tabel
-                    } else {
-                        alert("Gagal menghapus semua data!");
-                    }
-                })
-                .catch(err => alert("Error: " + err));
+        if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Cloud?")) {
+            fetch(urlDataWeb, { method: 'DELETE' }).then(res => { if (res.ok) { alert("Dihapus!"); ambilDataFirebase(); } else alert("Gagal!"); });
         }
     }
 
     // --- CEK DEVICE ONLINE ---
     function cekDeviceOnline() {
-        const statusUrl = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/device_status.json";
-        
+        const statusUrl = FIREBASE_URL + "device_status.json";
         fetch(statusUrl)
             .then(res => res.json())
             .then(data => {
                 if (!data) return;
-
                 const lastSeen = data.last_seen - 25200; 
                 const sekarang = Math.floor(Date.now() / 1000);
                 const selisih = sekarang - lastSeen;
@@ -279,35 +295,22 @@
                 const pillEl = document.getElementById("device-pill");
 
                 if (selisih >= 0 && selisih < 20) {
-                    statusEl.innerText = "ONLINE";
-                    pillEl.style.background = "#dcfce7";
-                    pillEl.style.color = "#166534";
+                    statusEl.innerText = "ONLINE"; pillEl.style.background = "#dcfce7"; pillEl.style.color = "#166534";
                 } else {
-                    statusEl.innerText = "OFFLINE";
-                    pillEl.style.background = "#fee2e2";
-                    pillEl.style.color = "#991b1b";
+                    statusEl.innerText = "OFFLINE"; pillEl.style.background = "#fee2e2"; pillEl.style.color = "#991b1b";
                 }
             })
-            .catch(err => {
-                document.getElementById("device-status").innerText = "OFFLINE";
-                document.getElementById("device-pill").style.background = "#fee2e2";
-                document.getElementById("device-pill").style.color = "#991b1b";
-            });
+            .catch(err => console.log(err));
     }
-
     setInterval(cekDeviceOnline, 5000);
     cekDeviceOnline();
 
-    // --- DOWNLOAD CSV ---
+    // --- DOWNLOAD CSV (LIVE DATA) ---
     function downloadCSV() {
-        fetch(firebaseUrl)
+        fetch(urlDataWeb)
             .then(res => res.json())
             .then(data => {
-                if (!data) {
-                    alert("Tidak ada data untuk diunduh!");
-                    return;
-                }
-
+                if (!data) return alert("Tidak ada data untuk diunduh!");
                 const arrayData = Object.values(data);
                 let csvContent = "Nama Siswa,Waktu Tap,Status\n";
 
@@ -315,119 +318,90 @@
                     let nama = item.nama.replace(/,/g, ""); 
                     let waktu = item.waktu;
                     let status = (item.status || "Realtime").replace(/⚡|🔄/g, "").trim(); 
-                    
                     csvContent += `${nama},${waktu},${status}\n`;
                 });
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
                 const link = document.createElement("a");
-                const url = URL.createObjectURL(blob);
-                
-                const tgl = new Date().toLocaleDateString('id-ID').replace(/\//g, '-');
-                link.setAttribute("href", url);
-                link.setAttribute("download", `Rekap_Cloud_${tgl}.csv`);
-                link.style.visibility = 'hidden';
-                
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            })
-            .catch(err => alert("Gagal mengambil data untuk download."));
-    }
-    const FIREBASE_URL = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/";
-let dataHarianSaatIni = []; // Variabel penampung untuk fitur download
-
-// 1. Fungsi mengambil daftar nama sheet (tanggal) dari Firebase
-function loadDaftarTanggal() {
-    fetch(FIREBASE_URL + "rekap_harian.json")
-        .then(response => response.json())
-        .then(data => {
-            let select = document.getElementById('pilih-tanggal');
-            select.innerHTML = '<option value="">-- Pilih Tanggal --</option>';
-            
-            if(data) {
-                // Looping nama folder/sheet dari Firebase (misal: ABSEN_16May2026)
-                for(let namaSheet in data) {
-                    // Tampilkan di dropdown, hapus kata "ABSEN_" agar lebih rapi
-                    let tanggalBersih = namaSheet.replace('ABSEN_', '');
-                    select.innerHTML += `<option value="${namaSheet}">${tanggalBersih}</option>`;
-                }
-            } else {
-                select.innerHTML = '<option value="">Belum ada arsip data</option>';
-            }
-        }).catch(err => console.log("Gagal memuat tanggal:", err));
-}
-
-// 2. Fungsi untuk menampilkan data ke tabel saat tombol "Lihat Data" diklik
-function lihatDataHarian() {
-    let namaSheet = document.getElementById('pilih-tanggal').value;
-    if(!namaSheet) return alert("Silakan pilih tanggal terlebih dahulu!");
-
-    document.getElementById('isi-arsip').innerHTML = "<tr><td>Memuat data...</td></tr>";
-
-    // Panggil data spesifik berdasarkan tanggal yang dipilih
-    fetch(FIREBASE_URL + "rekap_harian/" + namaSheet + ".json")
-        .then(response => response.json())
-        .then(dataArray => {
-            if(!dataArray) return document.getElementById('isi-arsip').innerHTML = "<tr><td>Data kosong</td></tr>";
-            
-            dataHarianSaatIni = dataArray; // Simpan ke memori untuk di-download nanti
-            let tbody = document.getElementById('isi-arsip');
-            tbody.innerHTML = ""; // Bersihkan isi tabel lama
-
-            // Google Sheets mengirim data berupa Array 2D (Baris dan Kolom)
-            dataArray.forEach((baris, indexRow) => {
-                let tr = document.createElement('tr');
-                
-               baris.forEach(kolom => {
-                    let cell = (indexRow < 2) ? document.createElement('th') : document.createElement('td');
-                    
-                    // Tambahkan style garis dan padding agar mirip tabel Vercel Anda
-                    cell.style.padding = "10px";
-                    cell.style.border = "1px solid #e2e8f0"; // Garis pembatas halus
-                    
-                    // Beri warna latar abu-abu terang khusus untuk baris header (baris 1 & 2)
-                    if(indexRow < 2) {
-                        cell.style.backgroundColor = "#f8fafc";
-                        cell.style.color = "#334155";
-                    } else {
-                        cell.style.color = "#475569";
-                    }
-                    
-                    cell.innerText = kolom;
-                    tr.appendChild(cell);
-                });
-                
-                tbody.appendChild(tr);
+                link.setAttribute("href", URL.createObjectURL(blob));
+                link.setAttribute("download", `Live_Data_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
+                document.body.appendChild(link); link.click(); document.body.removeChild(link);
             });
+    }
+
+    // ==========================================
+    // LOGIKA ARSIP GOOGLE SHEETS
+    // ==========================================
+    function loadDaftarTanggal() {
+        fetch(FIREBASE_URL + "rekap_harian.json")
+            .then(response => response.json())
+            .then(data => {
+                let select = document.getElementById('pilih-tanggal');
+                select.innerHTML = '<option value="">-- Pilih Tanggal --</option>';
+                if(data) {
+                    for(let namaSheet in data) {
+                        let tanggalBersih = namaSheet.replace('ABSEN_', '');
+                        select.innerHTML += `<option value="${namaSheet}">${tanggalBersih}</option>`;
+                    }
+                } else {
+                    select.innerHTML = '<option value="">Belum ada arsip data</option>';
+                }
+            });
+    }
+
+    function lihatDataHarian() {
+        let namaSheet = document.getElementById('pilih-tanggal').value;
+        if(!namaSheet) return alert("Silakan pilih tanggal terlebih dahulu!");
+
+        document.getElementById('isi-arsip').innerHTML = "<tr><td>Memuat data...</td></tr>";
+
+        fetch(FIREBASE_URL + "rekap_harian/" + namaSheet + ".json")
+            .then(response => response.json())
+            .then(dataArray => {
+                if(!dataArray) return document.getElementById('isi-arsip').innerHTML = "<tr><td>Data kosong</td></tr>";
+                
+                dataHarianSaatIni = dataArray; 
+                let tbody = document.getElementById('isi-arsip');
+                tbody.innerHTML = ""; 
+
+                dataArray.forEach((baris, indexRow) => {
+                    let tr = document.createElement('tr');
+                    baris.forEach(kolom => {
+                        let cell = (indexRow < 2) ? document.createElement('th') : document.createElement('td');
+                        
+                        cell.style.padding = "10px";
+                        cell.style.border = "1px solid #e2e8f0"; 
+                        
+                        if(indexRow < 2) {
+                            cell.style.backgroundColor = "#f8fafc";
+                            cell.style.color = "#334155";
+                        } else {
+                            cell.style.color = "#475569";
+                        }
+                        
+                        cell.innerText = kolom;
+                        tr.appendChild(cell);
+                    });
+                    tbody.appendChild(tr);
+                });
+            });
+    }
+
+    function downloadCSVHarian() {
+        if(dataHarianSaatIni.length === 0) return alert("Silakan klik 'Lihat Data' terlebih dahulu sebelum mendownload!");
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        dataHarianSaatIni.forEach(rowArray => {
+            let row = rowArray.join(","); 
+            csvContent += row + "\r\n";
         });
-}
 
-// 3. Fungsi untuk menyusun Array kembali menjadi File CSV dan men-downloadnya
-function downloadCSVHarian() {
-    if(dataHarianSaatIni.length === 0) return alert("Silakan klik 'Lihat Data' terlebih dahulu sebelum mendownload!");
-    
-    let csvContent = "data:text/csv;charset=utf-8,";
-    
-    // Gabungkan setiap kolom dengan koma, dan setiap baris dengan Enter (\n)
-    dataHarianSaatIni.forEach(rowArray => {
-        let row = rowArray.join(","); 
-        csvContent += row + "\r\n";
-    });
-
-    // Proses Pembuatan File Otomatis
-    let namaFile = document.getElementById('pilih-tanggal').value + ".csv";
-    let encodedUri = encodeURI(csvContent);
-    let link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", namaFile);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-// Panggil otomatis fungsi loadDaftarTanggal() saat web pertama kali dibuka
-window.addEventListener('load', loadDaftarTanggal);
+        let encodedUri = encodeURI(csvContent);
+        let link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", document.getElementById('pilih-tanggal').value + ".csv");
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
 </script>
 
 </body>
