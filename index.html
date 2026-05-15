@@ -436,7 +436,8 @@
         fetch(urlGoogleScript, {
             method: "POST",
             body: JSON.stringify(paketData),
-            headers: { "Content-Type": "text/plain;charset=utf-8" } // Gunakan text/plain untuk menghindari pemblokiran CORS
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            redirect: "follow" // <--- INI BARIS YANG WAJIB DITAMBAHKAN AGAR TIDAK ERROR "FAILED TO FETCH"
         })
         .then(response => response.json())
         .then(data => {
