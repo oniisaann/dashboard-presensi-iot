@@ -41,8 +41,8 @@
         #login-error { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
 
         /* --- STYLE DASHBOARD & ARSIP --- */
-        #dashboard-screen { width: 100%; max-width: 650px; display: none; }
-        #arsip-screen { width: 100%; max-width: 800px; display: none; } /* Kamar baru untuk Arsip */
+        #dashboard-screen { width: 100%; max-width: 750px; display: none; }
+        #arsip-screen { width: 100%; max-width: 800px; display: none; } 
         
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;}
         .header h1 { margin: 0; font-size: 20px; color: var(--primary); }
@@ -62,9 +62,10 @@
         td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
         tr:hover { background: #f8fafc; }
 
-        .badge-live { display: inline-block; padding: 5px 10px; background: #dcfce7; color: #166534; border-radius: 20px; font-size: 12px; font-weight: bold; margin-bottom: 15px; }
+        .badge-live { display: inline-block; padding: 5px 10px; background: #dcfce7; color: #166534; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .badge { font-weight: bold; border-radius: 20px; font-size: 11px; text-transform: uppercase; white-space: nowrap; }
         .status-realtime { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
-        .status-sync { background: #fef08a; color: #854d0e; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        .status-sync { background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -102,52 +103,40 @@
     </div>
 
     <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div class="badge-live">🟢 LIVE DATA FIREBASE</div>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <div style="font-size: 13px; color: var(--text-light);">Total: <span id="total-absen" style="font-weight: bold; color: var(--text-dark);">0</span></div>
-            <button onclick="downloadCSV()" style="padding: 5px 10px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">📥 DOWNLOAD CSV</button>
-            <button onclick="hapusSemua()" style="padding: 5px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">🗑️ HAPUS SEMUA</button>
-        </div>
-    </div>
-
-    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px;">
-        <div class="table-container" style="flex: 2; min-width: 300px; margin-top: 0;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nama Siswa</th>
-                        <th>Waktu Tap</th>
-                        <th style="text-align: center;">Status</th>
-                        <th style="text-align: center;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="tabel-data">
-                    <tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan ke server...</td></tr>
-                </tbody>
-            </table>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div class="badge-live">🟢 LIVE DATA FIREBASE</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <div style="font-size: 13px; color: var(--text-light);">Total: <span id="total-absen" style="font-weight: bold; color: var(--text-dark);">0</span></div>
+                <button onclick="downloadCSV()" style="padding: 5px 10px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">📥 DOWNLOAD CSV</button>
+                <button onclick="hapusSemua()" style="padding: 5px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">🗑️ HAPUS SEMUA</button>
+            </div>
         </div>
 
-        <div style="flex: 1; min-width: 200px; max-width: 250px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-            <span style="font-size: 12px; font-weight: bold; color: var(--text-light); margin-bottom: 10px;">STATISTIK HARI INI</span>
-            <canvas id="grafikPresensi"></canvas>
-        </div>
-    </div>
-</div>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nama Siswa</th>
-                        <th>Waktu Tap</th>
-                        <th style="text-align: center;">Status</th>
-                        <th style="text-align: center;">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody id="tabel-data">
-                    <tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan ke server...</td></tr>
-                </tbody>
-            </table>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px;">
+            <div style="flex: 2; min-width: 320px;">
+                <div class="table-container" style="margin-top: 0;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nama Siswa</th>
+                                <th>Waktu Tap</th>
+                                <th style="text-align: center;">Status</th>
+                                <th style="text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabel-data">
+                            <tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan ke server...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div style="flex: 1; min-width: 220px; max-width: 260px; background: #f8fafc; padding: 20px 15px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: fit-content; align-self: flex-start;">
+                <span style="font-size: 12px; font-weight: bold; color: var(--text-light); margin-bottom: 15px; letter-spacing: 0.5px;">STATISTIK HARI INI</span>
+                <div style="width: 100%; max-width: 180px; position: relative;">
+                    <canvas id="grafikPresensi"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -165,46 +154,45 @@
     </div>
 
     <div class="card">
-    <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 20px;">
-        Pilih tanggal untuk melihat, mendownload, atau mengirim rekap absensi.
-    </p>
-    
-    <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+        <p style="font-size: 13px; color: #64748b; margin-top: 0; margin-bottom: 20px;">
+            Pilih tanggal untuk melihat, mendownload, atau mengirim rekap absensi.
+        </p>
         
-        <select id="pilih-tanggal" style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; min-width: 150px;">
-            <option value="">-- Pilih Tanggal --</option>
-        </select>
-        
-        <button onclick="lihatDataHarian()" style="padding: 10px 15px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
-            👁️ Lihat Data
-        </button>
-
-        <button onclick="downloadCSVHarian()" style="padding: 10px 15px; background: #059669; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
-            📥 Download
-        </button>
-
-        <button onclick="window.open('https://docs.google.com/spreadsheets/d/1cg5meD7TcG0ULqDssanKtXdLTAJRNpOevxbcPkq1F_s/edit?gid=0#gid=0', '_blank')" 
-                style="padding: 10px 15px; background: #0f9d58; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
-            🟢 G-Sheets
-        </button>
-
-        <div style="width: 1px; height: 30px; background: #e2e8f0; margin: 0 5px;"></div>
-
-        <div style="display: flex; gap: 5px;">
-            <input type="email" id="input-email-id" placeholder="Alamat Email..." style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 200px; font-size: 13px;">
-            <button onclick="kirimKeEmail(this)" style="padding: 10px 15px; background: #ea4335; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
-                📧 Kirim
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;">
+            <select id="pilih-tanggal" style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 14px; min-width: 150px;">
+                <option value="">-- Pilih Tanggal --</option>
+            </select>
+            
+            <button onclick="lihatDataHarian()" style="padding: 10px 15px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                👁️ Lihat Data
             </button>
+
+            <button onclick="downloadCSVHarian()" style="padding: 10px 15px; background: #059669; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                📥 Download
+            </button>
+
+            <button onclick="window.open('https://docs.google.com/spreadsheets/d/1cg5meD7TcG0ULqDssanKtXdLTAJRNpOevxbcPkq1F_s/edit?gid=0#gid=0', '_blank')" 
+                    style="padding: 10px 15px; background: #0f9d58; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                🟢 G-Sheets
+            </button>
+
+            <div style="width: 1px; height: 30px; background: #e2e8f0; margin: 0 5px;"></div>
+
+            <div style="display: flex; gap: 5px;">
+                <input type="email" id="input-email-id" placeholder="Alamat Email..." style="padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; width: 200px; font-size: 13px;">
+                <button onclick="kirimKeEmail(this)" style="padding: 10px 15px; background: #ea4335; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                    📧 Kirim
+                </button>
+            </div>
+        </div>
+        <div class="table-container">
+            <table style="text-align: center;">
+                <tbody id="isi-arsip">
+                    <tr><td style="padding: 30px; color: #94a3b8;">Silakan pilih tanggal dan klik "Lihat Data"</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
-    <div class="table-container">
-        <table style="text-align: center;">
-            <tbody id="isi-arsip">
-                <tr><td style="padding: 30px; color: #94a3b8;">Silakan pilih tanggal dan klik "Lihat Data"</td></tr>
-            </tbody>
-        </table>
-    </div>
-</div>
 </div>
 
 <script>
@@ -213,9 +201,10 @@
     const PASS_VALID = "2026maju";
     const FIREBASE_URL = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/";
     const urlDataWeb = FIREBASE_URL + "data_web.json";
-    let myChart = null; // Menyimpan instance grafik agar tidak duplikat saat reload
-    let timeoutAktivitas; // Menyimpan timer session timeout
-    const WAKTU_TIMEOUT = 10 * 60 * 500; // 5 Menit (dalam milidetik)
+    
+    let myChart = null; 
+    let timeoutAktivitas; 
+    const WAKTU_TIMEOUT = 10 * 60 * 1000; // Timer diatur 10 menit
     
     let intervalSync; 
     let dataHarianSaatIni = []; 
@@ -244,7 +233,8 @@
             
             ambilDataFirebase();
             intervalSync = setInterval(ambilDataFirebase, 5000);
-            loadDaftarTanggal(); // Muat daftar tanggal di latar belakang
+            loadDaftarTanggal(); 
+            resetTimerTimeout(); // Aktifkan pengaman session
         } else {
             document.getElementById("login-error").style.display = "block";
         }
@@ -257,12 +247,12 @@
     // --- FUNGSI LOGOUT ---
     function lakukanLogout() {
         clearInterval(intervalSync); 
+        clearTimeout(timeoutAktivitas);
         
         document.getElementById("in-user").value = "";
         document.getElementById("in-pass").value = "";
         document.getElementById("login-error").style.display = "none";
         
-        // Sembunyikan semua layar konten, tampilkan login
         document.getElementById("dashboard-screen").style.display = "none";
         document.getElementById("arsip-screen").style.display = "none";
         document.getElementById("login-screen").style.display = "block";
@@ -274,64 +264,64 @@
         fetch(urlDataWeb)
             .then(res => res.json())
             .then(data => {
-            const tbody = document.getElementById('tabel-data');
-            if (!data) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
-                document.getElementById('total-absen').innerText = "0";
-                updateGrafik(0, 0);
-                return;
-            }
-            
-            const arrayKeys = Object.keys(data).reverse();
-            document.getElementById('total-absen').innerText = arrayKeys.length;
-
-            let html = '';
-            let jumlahHadir = 0;
-            let jumlahTerlambat = 0;
-
-            // --- ATUR JAM MASUK SEKOLAH DI SINI ---
-            const JAM_MASUK = 17;   // Jam 7
-            const MENIT_MASUK = 0; // Menit 00 (07:00)
-
-            arrayKeys.forEach(key => {
-                let item = data[key];
-                
-                // 1. Ambil teks jam dari Firebase (Contoh isi item.waktu: "07:05:23")
-                // Kita pecah berdasarkan tanda titik dua (:)
-                let waktuBagian = item.waktu.split(':');
-                let jamSiswa = parseInt(waktuBagian[0]);
-                let menitSiswa = parseInt(waktuBagian[1]);
-
-                // 2. Logika Menentukan Terlambat atau Tepat Waktu
-                let statusTeks = "Tepat Waktu ⚡";
-                let statusClass = "status-realtime"; // Warna hijau bawaan css Anda
-
-                if (jamSiswa > JAM_MASUK || (jamSiswa === JAM_MASUK && menitSiswa > MENIT_MASUK)) {
-                    statusTeks = "Terlambat ⚠️";
-                    statusClass = "status-sync"; // Ubah jadi class warna merah/kuning Anda
-                    jumlahTerlambat++; // Tambah hitungan grafik merah
-                } else {
-                    jumlahHadir++; // Tambah hitungan grafik hijau
+                const tbody = document.getElementById('tabel-data');
+                if (!data) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
+                    document.getElementById('total-absen').innerText = "0";
+                    updateGrafik(0, 0);
+                    return;
                 }
+                
+                const arrayKeys = Object.keys(data).reverse();
+                document.getElementById('total-absen').innerText = arrayKeys.length;
 
-                html += `
-                    <tr>
-                        <td style="font-weight: 600;">${item.nama}</td>
-                        <td style="color: #64748b; font-size: 13px;">${item.waktu}</td>
-                        <td style="text-align: center;">
-                            <span class="${statusClass}">${statusTeks}</span>
-                        </td>
-                        <td style="text-align: center;">
-                            <button onclick="hapusSatu('${key}')" style="border:none; background:transparent; color:#dc2626; cursor:pointer; font-size:16px;" title="Hapus Data ini">✕</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-            
-            // Lempar hasil hitungan lokal ke Chart.js
-            updateGrafik(jumlahHadir, jumlahTerlambat);
-        })
+                let html = '';
+                let jumlahHadir = 0;
+                let jumlahTerlambat = 0;
+
+                // --- SISTEM PEMBATASAN JAM MASUK SEKOLAH ---
+                const JAM_MASUK = 7;   // Jam 7 Pagi
+                const MENIT_MASUK = 0; // Menit 00
+
+                arrayKeys.forEach(key => {
+                    let item = data[key];
+                    
+                    // Memotong string waktu dari properti waktu (Format: "16/05/2026 15:42:29")
+                    // Mengambil substring bagian jam saja "15:42:29"
+                    let stringJamLengkap = item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu;
+                    let waktuBagian = stringJamLengkap.split(':');
+                    let jamSiswa = parseInt(waktuBagian[0]);
+                    let menitSiswa = parseInt(waktuBagian[1]);
+
+                    let statusTeks = "Tepat Waktu ⚡";
+                    let statusClass = "status-realtime"; 
+
+                    if (jamSiswa > JAM_MASUK || (jamSiswa === JAM_MASUK && menitSiswa > MENIT_MASUK)) {
+                        statusTeks = "Terlambat ⚠️";
+                        statusClass = "status-sync"; 
+                        jumlahTerlambat++; 
+                    } else {
+                        jumlahHadir++; 
+                    }
+
+                    html += `
+                        <tr>
+                            <td style="font-weight: 600;">${item.nama}</td>
+                            <td style="color: #64748b; font-size: 13px;">${item.waktu}</td>
+                            <td style="text-align: center;">
+                                <span class="${statusClass}">${statusTeks}</span>
+                            </td>
+                            <td style="text-align: center;">
+                                <button onclick="hapusSatu('${key}')" style="border:none; background:transparent; color:#dc2626; cursor:pointer; font-size:16px;" title="Hapus Data ini">✕</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+                
+                // Refresh visual chart
+                updateGrafik(jumlahHadir, jumlahTerlambat);
+            })
             .catch(err => {
                 console.error("Error:", err);
                 document.getElementById('tabel-data').innerHTML = '<tr><td colspan="4" style="text-align:center; color: red;">Gagal terhubung ke database.</td></tr>';
@@ -346,20 +336,23 @@
         }
     }
 
+    // --- FUNGSI HAPUS MASSAL ---
     function hapusSemua() {
         if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Cloud?")) {
             fetch(urlDataWeb, { method: 'DELETE' }).then(res => { if (res.ok) { alert("Dihapus!"); ambilDataFirebase(); } else alert("Gagal!"); });
         }
     }
 
-    // --- CEK DEVICE ONLINE ---
+    // --- CEK INDIKATOR DEVICE ONLINE/OFFLINE ---
     function cekDeviceOnline() {
         const statusUrl = FIREBASE_URL + "device_status.json";
         fetch(statusUrl)
             .then(res => res.json())
             .then(data => {
                 if (!data) return;
-                const lastSeen = data.last_seen - 25200; 
+                
+                // Kalkulasi murni tanpa pengurangan nilai kompensasi UTC karena Wemos sudah mengirim format lokal WIB
+                const lastSeen = data.last_seen; 
                 const sekarang = Math.floor(Date.now() / 1000);
                 const selisih = sekarang - lastSeen;
 
@@ -372,7 +365,7 @@
                     statusEl.innerText = "OFFLINE"; pillEl.style.background = "#fee2e2"; pillEl.style.color = "#991b1b";
                 }
             })
-            .catch(err => console.log(err));
+            .catch(err => console.log("Gagal cek status hardware:", err));
     }
     setInterval(cekDeviceOnline, 5000);
     cekDeviceOnline();
@@ -401,9 +394,7 @@
             });
     }
 
-    // ==========================================
-    // LOGIKA ARSIP GOOGLE SHEETS
-    // ==========================================
+    // --- LOGIKA ARSIP GOOGLE SHEETS ---
     function loadDaftarTanggal() {
         fetch(FIREBASE_URL + "rekap_harian.json")
             .then(response => response.json())
@@ -474,14 +465,13 @@
         link.setAttribute("download", document.getElementById('pilih-tanggal').value + ".csv");
         document.body.appendChild(link); link.click(); document.body.removeChild(link);
     }
-    // --- FUNGSI KIRIM FILE KE EMAIL ---
-   // --- FUNGSI KIRIM FILE KE EMAIL (JALUR ANTI-CORS) ---
+
+    // --- TRANSMISI EMAIL VIA WEB APP INTERMEDIARY ---
     function kirimKeEmail(tombol) {
         const emailTujuan = document.getElementById('input-email-id').value.trim();
         if(!emailTujuan || !emailTujuan.includes('@')) return alert("Silakan isi alamat Email yang valid!");
         if(dataHarianSaatIni.length === 0) return alert("Silakan klik 'Lihat Data' terlebih dahulu!");
 
-        // ⚠️ PASTE URL /exec DARI DEPLOYMENT YANG BARU DIBUAT TADI DI SINI:
         const urlGoogleScript = "https://script.google.com/macros/s/AKfycbyuxgryfXk0q79ZbNJx_mlotbu-ez7VfWY5hRibIFSAakZwcZrpMkk6GkridoZMZepy/exec";
 
         const teksLama = tombol.innerText;
@@ -495,7 +485,6 @@
 
         const namaFile = document.getElementById('pilih-tanggal').value + ".csv";
 
-        // JURUS PAMUNGKAS: Bungkus data seperti Formulir HTML (URLSearchParams)
         const formData = new URLSearchParams();
         formData.append("email", emailTujuan);
         formData.append("nama_file", namaFile);
@@ -504,13 +493,12 @@
         fetch(urlGoogleScript, {
             method: "POST",
             body: formData 
-            // Perhatikan: Kita sengaja membuang 'headers' dan 'mode' agar browser rileks!
         })
-        .then(response => response.text()) // Tangkap balasan teks murni
+        .then(response => response.text()) 
         .then(text => {
             if(text.includes("SUKSES")) {
                 alert("✅ Laporan berhasil meluncur ke: " + emailTujuan);
-                document.getElementById('input-email-id').value = ""; // Kosongkan kolom
+                document.getElementById('input-email-id').value = ""; 
             } else {
                 alert("❌ Google Script menolak: " + text);
             }
@@ -523,89 +511,61 @@
             tombol.disabled = false;
         });
     }
-    // --- FUNGSI QUICK SEARCH (PENCERIAN CEPAT) ---
-function cariSiswa() {
-    // Ambil teks yang diketik pengguna dan ubah ke huruf kecil
-    const kataKunci = document.getElementById("input-cari-siswa").value.toLowerCase();
-    
-    // Ambil semua baris data di dalam tabel live
-    const tabel = document.getElementById("tabel-data");
-    const barisData = tabel.getElementsByTagName("tr");
 
-    // Lakukan perulangan untuk setiap baris tabel
-    for (let i = 0; i < barisData.length; i++) {
-        // Ambil kolom pertama (kolom Nama Siswa)
-        const kolomNama = barisData[i].getElementsByTagName("td")[0];
+    // --- VISUALISASI DOUGHNUT CHART ---
+    function updateGrafik(hadir, terlambat) {
+        const ctx = document.getElementById('grafikPresensi').getContext('2d');
         
-        if (kolomNama) {
-            const teksNama = kolomNama.textContent || kolomNama.innerText;
-            
-            // Jika nama cocok dengan kata kunci, tampilkan barisnya. Jika tidak, sembunyikan.
-            if (teksNama.toLowerCase().indexOf(kataKunci) > -1) {
-                barisData[i].style.display = "";
-            } else {
-                barisData[i].style.display = "none";
-            }
+        if (myChart) {
+            myChart.destroy();
         }
-    }
-}
-    // --- FUNGSI UPDATE VISUALISASI GRAFIK LINGKARAN ---
-function updateGrafik(hadir, terlambat) {
-    const ctx = document.getElementById('grafikPresensi').getContext('2d');
-    
-    // Jika grafik sudah ada, hancurkan dulu sebelum membuat baru agar tidak tumpang tindih
-    if (myChart) {
-        myChart.destroy();
-    }
 
-    // Jika belum ada data sama sekali
-    if (hadir === 0 && terlambat === 0) {
+        if (hadir === 0 && terlambat === 0) {
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Belum Ada Data'],
+                    datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
+                },
+                options: { responsive: true, plugins: { legend: { display: false } } }
+            });
+            return;
+        }
+
         myChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Belum Ada Data'],
-                datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
+                labels: ['Tepat Waktu', 'Terlambat'],
+                datasets: [{
+                    data: [hadir, terlambat],
+                    backgroundColor: ['#10b981', '#ef4444'], 
+                    borderWidth: 1
+                }]
             },
-            options: { responsive: true, plugins: { legend: { display: false } } }
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } }
+                }
+            }
         });
-        return;
     }
 
-    // Gambar grafik asli dari data Firebase
-    myChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Tepat Waktu', 'Terlambat'],
-            datasets: [{
-                data: [hadir, terlambat],
-                backgroundColor: ['#10b981', '#ef4444'], // Hijau dan Merah
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
-            }
-        }
-    });
-}
-// --- LOGIKA KEAMANAN: SESSION TIMEOUT OTO-LOGOUT ---
-function resetTimerTimeout() {
-    clearTimeout(timeoutAktivitas);
-    // Jalankan auto-logout jika pengguna pasif
-    timeoutAktivitas = setTimeout(function() {
-        alert("🔒 Sesi Anda telah berakhir demi keamanan. Silakan login kembali.");
-        lakukanLogout();
-    }, WAKTU_TIMEOUT);
-}
+    // --- ENFORCEMENT SESSION TIMEOUT ---
+    function resetTimerTimeout() {
+        clearTimeout(timeoutAktivitas);
+        timeoutAktivitas = setTimeout(function() {
+            alert("🔒 Sesi Anda telah berakhir demi keamanan. Silakan login kembali.");
+            lakukanLogout();
+        }, WAKTU_TIMEOUT);
+    }
 
-// Rekam aktivitas pengguna untuk mereset timer
-window.onload = resetTimerTimeout;
-document.onmousemove = resetTimerTimeout;
-document.onkeypress = resetTimerTimeout;
-document.onclick = resetTimerTimeout;
-document.onscroll = resetTimerTimeout;
+    // Pemicu reset timer aktivitas
+    window.onload = resetTimerTimeout;
+    document.onmousemove = resetTimerTimeout;
+    document.onkeypress = resetTimerTimeout;
+    document.onclick = resetTimerTimeout;
+    document.onscroll = resetTimerTimeout;
 </script>
 
 </body>
