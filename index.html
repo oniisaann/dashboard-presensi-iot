@@ -563,6 +563,32 @@
             lakukanLogout();
         }, WAKTU_TIMEOUT);
     }
+    // --- FUNGSI QUICK SEARCH (PENCERIAN CEPAT) ---
+function cariSiswa() {
+    // Ambil teks yang diketik pengguna dan ubah ke huruf kecil
+    const kataKunci = document.getElementById("input-cari-siswa").value.toLowerCase();
+    
+    // Ambil semua baris data di dalam tabel live
+    const tabel = document.getElementById("tabel-data");
+    const barisData = tabel.getElementsByTagName("tr");
+
+    // Lakukan perulangan untuk setiap baris tabel
+    for (let i = 0; i < barisData.length; i++) {
+        // Ambil kolom pertama (kolom Nama Siswa)
+        const kolomNama = barisData[i].getElementsByTagName("td")[0];
+        
+        if (kolomNama) {
+            const teksNama = kolomNama.textContent || kolomNama.innerText;
+            
+            // Jika nama cocok dengan kata kunci, tampilkan barisnya. Jika tidak, sembunyikan.
+            if (teksNama.toLowerCase().indexOf(kataKunci) > -1) {
+                barisData[i].style.display = "";
+            } else {
+                barisData[i].style.display = "none";
+            }
+        }
+    }
+}
 
     // Pemicu reset timer aktivitas
     window.onload = resetTimerTimeout;
