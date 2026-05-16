@@ -112,6 +112,10 @@
                     🗑️ HAPUS SEMUA
                 </button>
             </div>
+            <div style="margin-bottom: 15px;">
+            <input type="text" id="input-cari-siswa" onkeyup="cariSiswa()" placeholder="🔍 Cari nama siswa..." 
+           style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.3s;">
+            </div>
         </div>
         <div class="table-container">
             <table>
@@ -473,6 +477,32 @@
             tombol.disabled = false;
         });
     }
+    // --- FUNGSI QUICK SEARCH (PENCERIAN CEPAT) ---
+function cariSiswa() {
+    // Ambil teks yang diketik pengguna dan ubah ke huruf kecil
+    const kataKunci = document.getElementById("input-cari-siswa").value.toLowerCase();
+    
+    // Ambil semua baris data di dalam tabel live
+    const tabel = document.getElementById("tabel-data");
+    const barisData = tabel.getElementsByTagName("tr");
+
+    // Lakukan perulangan untuk setiap baris tabel
+    for (let i = 0; i < barisData.length; i++) {
+        // Ambil kolom pertama (kolom Nama Siswa)
+        const kolomNama = barisData[i].getElementsByTagName("td")[0];
+        
+        if (kolomNama) {
+            const teksNama = kolomNama.textContent || kolomNama.innerText;
+            
+            // Jika nama cocok dengan kata kunci, tampilkan barisnya. Jika tidak, sembunyikan.
+            if (teksNama.toLowerCase().indexOf(kataKunci) > -1) {
+                barisData[i].style.display = "";
+            } else {
+                barisData[i].style.display = "none";
+            }
+        }
+    }
+}
 </script>
 
 </body>
