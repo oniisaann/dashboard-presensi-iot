@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud Dashboard - Presensi SMA MUH</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; }
         :root { 
@@ -101,22 +102,38 @@
     </div>
 
     <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div class="badge-live">🟢 LIVE DATA FIREBASE</div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <div style="font-size: 13px; color: var(--text-light);">Total: <span id="total-absen" style="font-weight: bold; color: var(--text-dark);">0</span></div>
-                <button onclick="downloadCSV()" style="padding: 5px 10px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">
-                    📥 DOWNLOAD CSV
-                </button>
-                <button onclick="hapusSemua()" style="padding: 5px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">
-                    🗑️ HAPUS SEMUA
-                </button>
-            </div>
-            <div style="margin-bottom: 15px;">
-            <input type="text" id="input-cari-siswa" onkeyup="cariSiswa()" placeholder="🔍 Cari nama siswa..." 
-           style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.3s;">
-            </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div class="badge-live">🟢 LIVE DATA FIREBASE</div>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <div style="font-size: 13px; color: var(--text-light);">Total: <span id="total-absen" style="font-weight: bold; color: var(--text-dark);">0</span></div>
+            <button onclick="downloadCSV()" style="padding: 5px 10px; background: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">📥 DOWNLOAD CSV</button>
+            <button onclick="hapusSemua()" style="padding: 5px 10px; background: #fee2e2; color: #dc2626; border: none; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;">🗑️ HAPUS SEMUA</button>
         </div>
+    </div>
+
+    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 15px;">
+        <div class="table-container" style="flex: 2; min-width: 300px; margin-top: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nama Siswa</th>
+                        <th>Waktu Tap</th>
+                        <th style="text-align: center;">Status</th>
+                        <th style="text-align: center;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-data">
+                    <tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan ke server...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div style="flex: 1; min-width: 200px; max-width: 250px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <span style="font-size: 12px; font-weight: bold; color: var(--text-light); margin-bottom: 10px;">STATISTIK HARI INI</span>
+            <canvas id="grafikPresensi"></canvas>
+        </div>
+    </div>
+</div>
         <div class="table-container">
             <table>
                 <thead>
@@ -196,6 +213,9 @@
     const PASS_VALID = "2026maju";
     const FIREBASE_URL = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/";
     const urlDataWeb = FIREBASE_URL + "data_web.json";
+    let myChart = null; // Menyimpan instance grafik agar tidak duplikat saat reload
+    let timeoutAktivitas; // Menyimpan timer session timeout
+    const WAKTU_TIMEOUT = 10 * 60 * 500; // 5 Menit (dalam milidetik)
     
     let intervalSync; 
     let dataHarianSaatIni = []; 
@@ -254,37 +274,51 @@
         fetch(urlDataWeb)
             .then(res => res.json())
             .then(data => {
-                const tbody = document.getElementById('tabel-data');
-                if (!data) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
-                    document.getElementById('total-absen').innerText = "0";
-                    return;
+            const tbody = document.getElementById('tabel-data');
+            if (!data) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
+                document.getElementById('total-absen').innerText = "0";
+                updateGrafik(0, 0); // Reset grafik jadi kosong
+                return;
+            }
+            
+            const arrayKeys = Object.keys(data).reverse();
+            document.getElementById('total-absen').innerText = arrayKeys.length;
+
+            let html = '';
+            let jumlahHadir = 0;
+            let jumlahTerlambat = 0;
+
+            arrayKeys.forEach(key => {
+                let item = data[key];
+                let statusTeks = item.status || "Realtime ⚡"; 
+                let statusClass = statusTeks.includes("Sync") ? "status-sync" : "status-realtime";
+
+                // Hitung data statistik berdasarkan teks keterangan
+                if (statusTeks.includes("Terlambat")) {
+                    jumlahTerlambat++;
+                } else {
+                    jumlahHadir++;
                 }
-                
-                const arrayKeys = Object.keys(data).reverse();
-                document.getElementById('total-absen').innerText = arrayKeys.length;
 
-                let html = '';
-                arrayKeys.forEach(key => {
-                    let item = data[key];
-                    let statusTeks = item.status || "Realtime ⚡"; 
-                    let statusClass = statusTeks.includes("Sync") ? "status-sync" : "status-realtime";
-
-                    html += `
-                        <tr>
-                            <td style="font-weight: 600;">${item.nama}</td>
-                            <td style="color: #64748b; font-size: 13px;">${item.waktu}</td>
-                            <td style="text-align: center;">
-                                <span class="${statusClass}">${statusTeks}</span>
-                            </td>
-                            <td style="text-align: center;">
-                                <button onclick="hapusSatu('${key}')" style="border:none; background:transparent; color:#dc2626; cursor:pointer; font-size:16px;" title="Hapus Data ini">✕</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                tbody.innerHTML = html;
-            })
+                html += `
+                    <tr>
+                        <td style="font-weight: 600;">${item.nama}</td>
+                        <td style="color: #64748b; font-size: 13px;">${item.waktu}</td>
+                        <td style="text-align: center;">
+                            <span class="${statusClass}">${statusTeks}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <button onclick="hapusSatu('${key}')" style="border:none; background:transparent; color:#dc2626; cursor:pointer; font-size:16px;" title="Hapus Data ini">✕</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            
+            // Perbarui visualisasi grafik setiap data Firebase diperbarui
+            updateGrafik(jumlahHadir, jumlahTerlambat);
+        })
             .catch(err => {
                 console.error("Error:", err);
                 document.getElementById('tabel-data').innerHTML = '<tr><td colspan="4" style="text-align:center; color: red;">Gagal terhubung ke database.</td></tr>';
@@ -502,6 +536,63 @@ function cariSiswa() {
         }
     }
 }
+    // --- FUNGSI UPDATE VISUALISASI GRAFIK LINGKARAN ---
+function updateGrafik(hadir, terlambat) {
+    const ctx = document.getElementById('grafikPresensi').getContext('2d');
+    
+    // Jika grafik sudah ada, hancurkan dulu sebelum membuat baru agar tidak tumpang tindih
+    if (myChart) {
+        myChart.destroy();
+    }
+
+    // Jika belum ada data sama sekali
+    if (hadir === 0 && terlambat === 0) {
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Belum Ada Data'],
+                datasets: [{ data: [1], backgroundColor: ['#e2e8f0'] }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+        return;
+    }
+
+    // Gambar grafik asli dari data Firebase
+    myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Tepat Waktu', 'Terlambat'],
+            datasets: [{
+                data: [hadir, terlambat],
+                backgroundColor: ['#10b981', '#ef4444'], // Hijau dan Merah
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+            }
+        }
+    });
+}
+// --- LOGIKA KEAMANAN: SESSION TIMEOUT OTO-LOGOUT ---
+function resetTimerTimeout() {
+    clearTimeout(timeoutAktivitas);
+    // Jalankan auto-logout jika pengguna pasif
+    timeoutAktivitas = setTimeout(function() {
+        alert("🔒 Sesi Anda telah berakhir demi keamanan. Silakan login kembali.");
+        lakukanLogout();
+    }, WAKTU_TIMEOUT);
+}
+
+// Rekam aktivitas pengguna untuk mereset timer
+window.onload = resetTimerTimeout;
+document.onmousemove = resetTimerTimeout;
+document.onkeypress = resetTimerTimeout;
+document.onclick = resetTimerTimeout;
+document.onscroll = resetTimerTimeout;
 </script>
 
 </body>
