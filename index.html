@@ -343,16 +343,14 @@
         }
     }
 
-    // --- CEK INDIKATOR DEVICE ONLINE/OFFLINE ---
+    // --- CEK DEVICE ONLINE ---
     function cekDeviceOnline() {
         const statusUrl = FIREBASE_URL + "device_status.json";
         fetch(statusUrl)
             .then(res => res.json())
             .then(data => {
                 if (!data) return;
-                
-                // Kalkulasi murni tanpa pengurangan nilai kompensasi UTC karena Wemos sudah mengirim format lokal WIB
-                const lastSeen = data.last_seen; 
+                const lastSeen = data.last_seen - 25200; 
                 const sekarang = Math.floor(Date.now() / 1000);
                 const selisih = sekarang - lastSeen;
 
@@ -365,7 +363,7 @@
                     statusEl.innerText = "OFFLINE"; pillEl.style.background = "#fee2e2"; pillEl.style.color = "#991b1b";
                 }
             })
-            .catch(err => console.log("Gagal cek status hardware:", err));
+            .catch(err => console.log(err));
     }
     setInterval(cekDeviceOnline, 5000);
     cekDeviceOnline();
