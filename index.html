@@ -6,66 +6,241 @@
     <title>Cloud Dashboard - Presensi SMA MUH</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        * { box-sizing: border-box; }
-        :root { 
-            --bg: #f8fafc; --card: #ffffff; --primary: #0ea5e9; 
-            --text-dark: #0f172a; --text-light: #64748b; --danger: #ef4444;
+        * { 
+            box-sizing: border-box; 
         }
+        
+        :root { 
+            --bg: #f8fafc; 
+            --card: #ffffff; 
+            --primary: #0ea5e9; 
+            --text-dark: #0f172a; 
+            --text-light: #64748b; 
+            --danger: #ef4444;
+        }
+        
         body { 
             font-family: 'Segoe UI', Roboto, sans-serif; 
-            background: var(--bg); color: var(--text-dark); 
-            margin: 0; padding: 20px; 
-            display: flex; justify-content: center; align-items: center;
+            background: var(--bg); 
+            color: var(--text-dark); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
             min-height: 100vh;
         }
         
         /* --- STYLE UNTUK LOGIN --- */
         #login-screen {
-            background: var(--card); padding: 40px 30px; 
-            border-radius: 16px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            width: 100%; max-width: 350px; text-align: center;
+            background: var(--card); 
+            padding: 40px 30px; 
+            border-radius: 16px; 
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            width: 100%; 
+            max-width: 350px; 
+            text-align: center;
         }
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; font-size: 13px; color: var(--text-light); margin-bottom: 5px; font-weight: bold;}
+        
+        .input-group { 
+            margin-bottom: 15px; 
+            text-align: left; 
+        }
+        
+        .input-group label { 
+            display: block; 
+            font-size: 13px; 
+            color: var(--text-light); 
+            margin-bottom: 5px; 
+            font-weight: bold;
+        }
+        
         .input-group input { 
-            width: 100%; padding: 12px; border: 1px solid #cbd5e1; 
-            border-radius: 8px; font-size: 14px; transition: 0.3s;
+            width: 100%; 
+            padding: 12px; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            transition: 0.3s;
         }
-        .input-group input:focus { border-color: var(--primary); outline: none; }
+        
+        .input-group input:focus { 
+            border-color: var(--primary); 
+            outline: none; 
+        }
+        
         .btn-login {
-            width: 100%; padding: 12px; background: var(--primary); 
-            color: white; border: none; border-radius: 8px; 
-            font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px;
+            width: 100%; 
+            padding: 12px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-top: 10px;
         }
-        .btn-login:hover { background: #0284c7; }
-        #login-error { color: var(--danger); font-size: 13px; margin-top: 10px; display: none; }
+        
+        .btn-login:hover { 
+            background: #0284c7; 
+        }
+        
+        #login-error { 
+            color: var(--danger); 
+            font-size: 13px; 
+            margin-top: 10px; 
+            display: none; 
+        }
 
         /* --- STYLE DASHBOARD & ARSIP --- */
-        #dashboard-screen { width: 100%; max-width: 750px; display: none; }
-        #arsip-screen { width: 100%; max-width: 800px; display: none; } 
+        #dashboard-screen { 
+            width: 100%; 
+            max-width: 750px; 
+            display: none; 
+        }
         
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;}
-        .header h1 { margin: 0; font-size: 20px; color: var(--primary); }
-        .header p { margin: 5px 0 0 0; color: var(--text-light); font-size: 13px; }
+        #arsip-screen { 
+            width: 100%; 
+            max-width: 800px; 
+            display: none; 
+        } 
+        
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 25px; 
+            flex-wrap: wrap; 
+            gap: 15px;
+        }
+        
+        .header h1 { 
+            margin: 0; 
+            font-size: 20px; 
+            color: var(--primary); 
+        }
+        
+        .header p { 
+            margin: 5px 0 0 0; 
+            color: var(--text-light); 
+            font-size: 13px; 
+        }
         
         /* Tombol Navigasi Atas */
-        .header-buttons { display: flex; gap: 10px; align-items: center; }
-        .btn-nav { background: #f1f5f9; border: 1px solid #cbd5e1; color: #334155; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s;}
-        .btn-nav:hover { background: #e2e8f0; }
-        .btn-logout { background: transparent; border: 1px solid var(--danger); color: var(--danger); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s;}
-        .btn-logout:hover { background: var(--danger); color: white; }
+        .header-buttons { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+        }
         
-        .card { background: var(--card); padding: 20px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .table-container { max-height: 400px; overflow-y: auto; margin-top: 15px; border: 1px solid #e2e8f0; border-radius: 8px;}
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-        th { background: #f1f5f9; padding: 12px; position: sticky; top: 0; border-bottom: 2px solid #cbd5e1;}
-        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
-        tr:hover { background: #f8fafc; }
+        .btn-nav { 
+            background: #f1f5f9; 
+            border: 1px solid #cbd5e1; 
+            color: #334155; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: bold; 
+            transition: 0.2s;
+        }
+        
+        .btn-nav:hover { 
+            background: #e2e8f0; 
+        }
+        
+        .btn-logout { 
+            background: transparent; 
+            border: 1px solid var(--danger); 
+            color: var(--danger); 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 12px; 
+            font-weight: bold; 
+            transition: 0.2s;
+        }
+        
+        .btn-logout:hover { 
+            background: var(--danger); 
+            color: white; 
+        }
+        
+        .card { 
+            background: var(--card); 
+            padding: 20px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); 
+        }
+        
+        .table-container { 
+            max-height: 400px; 
+            overflow-y: auto; 
+            margin-top: 15px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 8px;
+        }
+        
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            text-align: left; 
+            font-size: 14px; 
+        }
+        
+        th { 
+            background: #f1f5f9; 
+            padding: 12px; 
+            position: sticky; 
+            top: 0; 
+            border-bottom: 2px solid #cbd5e1;
+        }
+        
+        td { 
+            padding: 10px 12px; 
+            border-bottom: 1px solid #e2e8f0; 
+        }
+        
+        tr:hover { 
+            background: #f8fafc; 
+        }
 
-        .badge-live { display: inline-block; padding: 5px 10px; background: #dcfce7; color: #166534; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .badge { font-weight: bold; border-radius: 20px; font-size: 11px; text-transform: uppercase; white-space: nowrap; }
-        .status-realtime { background: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
-        .status-sync { background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        .badge-live { 
+            display: inline-block; 
+            padding: 5px 10px; 
+            background: #dcfce7; 
+            color: #166534; 
+            border-radius: 20px; 
+            font-size: 12px; 
+            font-weight: bold; 
+        }
+        
+        .badge { 
+            font-weight: bold; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            white-space: nowrap; 
+        }
+        
+        .status-realtime { 
+            background: #e0f2fe; 
+            color: #0369a1; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-size: 11px; 
+            font-weight: bold; 
+        }
+        
+        .status-sync { 
+            background: #fee2e2; 
+            color: #991b1b; 
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-size: 11px; 
+            font-weight: bold; 
+        }
     </style>
 </head>
 <body>
@@ -175,7 +350,7 @@
                 📥 Download
             </button>
 
-            <button onclick="window.open('https://docs.google.com/spreadsheets/d/1cg5meD7TcG0ULqDssanKtXdLTAJRNpOevxbcPkq1F_s/edit?gid=0#gid=0', '_blank')" 
+            <button onclick="window.open('https://docs.google.com/spreadsheets/d/1cg5meD7TcG0ULqDssanKtXdLTAJRNpOevxbcPkq1F_s/edit?gid=0#gid=0', '_blank')", 
                     style="padding: 10px 15px; background: #0f9d58; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
                 🟢 G-Sheets
             </button>
@@ -189,6 +364,7 @@
                 </button>
             </div>
         </div>
+        
         <div class="table-container">
             <table style="text-align: center;">
                 <tbody id="isi-arsip">
@@ -201,8 +377,6 @@
 
 <script>
     // --- KONFIGURASI ---
-    const USER_VALID = "admin2026";
-    const PASS_VALID = "2026maju";
     const FIREBASE_URL = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/";
     const urlDataWeb = FIREBASE_URL + "data_web.json";
     
@@ -224,24 +398,49 @@
         document.getElementById("dashboard-screen").style.display = "block";
     }
 
-    // --- FUNGSI LOGIN ---
+    // --- FUNGSI LOGIN (SINKRONISASI SEAMAN MUNGKIN VIA FIREBASE) ---
     function cekLogin() {
         const user = document.getElementById("in-user").value;
         const pass = document.getElementById("in-pass").value;
+        const btnLogin = document.querySelector('.btn-login');
 
-        if (user === USER_VALID && pass === PASS_VALID) {
-            document.getElementById("login-screen").style.display = "none";
-            document.getElementById("dashboard-screen").style.display = "block";
-            
-            document.body.style.alignItems = "flex-start"; 
-            
-            ambilDataFirebase();
-            intervalSync = setInterval(ambilDataFirebase, 5000);
-            loadDaftarTanggal(); 
-            resetTimerTimeout(); // Aktifkan pengaman session
-        } else {
+        if (!user || !pass) {
+            document.getElementById("login-error").innerText = "Harap isi username dan password!";
             document.getElementById("login-error").style.display = "block";
+            return;
         }
+
+        btnLogin.innerText = "⏳ Mengecek...";
+        btnLogin.disabled = true;
+
+        // Ambil data admin_auth langsung dari Firebase secara real-time
+        fetch(FIREBASE_URL + "admin_auth.json")
+            .then(res => res.json())
+            .then(data => {
+                if (data && user === data.username && pass === data.password) {
+                    document.getElementById("login-error").style.display = "none";
+                    document.getElementById("login-screen").style.display = "none";
+                    document.getElementById("dashboard-screen").style.display = "block";
+                    
+                    document.body.style.alignItems = "flex-start"; 
+                    
+                    ambilDataFirebase();
+                    intervalSync = setInterval(ambilDataFirebase, 5000);
+                    loadDaftarTanggal(); 
+                    resetTimerTimeout(); 
+                } else {
+                    document.getElementById("login-error").innerText = "Username atau Password salah!";
+                    document.getElementById("login-error").style.display = "block";
+                }
+            })
+            .catch(err => {
+                document.getElementById("login-error").innerText = "Gagal terhubung ke database!";
+                document.getElementById("login-error").style.display = "block";
+            })
+            .finally(() => {
+                btnLogin.innerText = "MASUK";
+                btnLogin.disabled = false;
+            });
     }
 
     document.getElementById("in-pass").addEventListener("keypress", function(event) {
@@ -283,15 +482,12 @@
                 let jumlahHadir = 0;
                 let jumlahTerlambat = 0;
 
-                // --- SISTEM PEMBATASAN JAM MASUK SEKOLAH ---
-                const JAM_MASUK = 7;   // Jam 7 Pagi
-                const MENIT_MASUK = 0; // Menit 00
+                const JAM_MASUK = 7;   
+                const MENIT_MASUK = 0; 
 
                 arrayKeys.forEach(key => {
                     let item = data[key];
                     
-                    // Memotong string waktu dari properti waktu (Format: "16/05/2026 15:42:29")
-                    // Mengambil substring bagian jam saja "15:42:29"
                     let stringJamLengkap = item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu;
                     let waktuBagian = stringJamLengkap.split(':');
                     let jamSiswa = parseInt(waktuBagian[0]);
@@ -323,9 +519,7 @@
                 });
                 tbody.innerHTML = html;
                 
-                // Refresh visual chart
                 updateGrafik(jumlahHadir, jumlahTerlambat);
-                // Panggil fungsi pencarian agar filter ketikan Anda tidak hilang saat reload otomatis
                 cariSiswa();
             })
             .catch(err => {
@@ -338,14 +532,26 @@
     function hapusSatu(key) {
         if (confirm("Apakah Anda yakin ingin menghapus data presensi ini?")) {
             const urlHapus = urlDataWeb.replace('.json', '/' + key + '.json');
-            fetch(urlHapus, { method: 'DELETE' }).then(res => { if (res.ok) ambilDataFirebase(); else alert("Gagal!"); });
+            fetch(urlHapus, { method: 'DELETE' })
+                .then(res => { 
+                    if (res.ok) ambilDataFirebase(); 
+                    else alert("Gagal!"); 
+                });
         }
     }
 
     // --- FUNGSI HAPUS MASSAL ---
     function hapusSemua() {
         if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Cloud?")) {
-            fetch(urlDataWeb, { method: 'DELETE' }).then(res => { if (res.ok) { alert("Dihapus!"); ambilDataFirebase(); } else alert("Gagal!"); });
+            fetch(urlDataWeb, { method: 'DELETE' })
+                .then(res => { 
+                    if (res.ok) { 
+                        alert("Dihapus!"); 
+                        ambilDataFirebase(); 
+                    } else {
+                        alert("Gagal!"); 
+                    }
+                });
         }
     }
 
@@ -364,13 +570,18 @@
                 const pillEl = document.getElementById("device-pill");
 
                 if (selisih >= 0 && selisih < 20) {
-                    statusEl.innerText = "ONLINE"; pillEl.style.background = "#dcfce7"; pillEl.style.color = "#166534";
+                    statusEl.innerText = "ONLINE"; 
+                    pillEl.style.background = "#dcfce7"; 
+                    pillEl.style.color = "#166534";
                 } else {
-                    statusEl.innerText = "OFFLINE"; pillEl.style.background = "#fee2e2"; pillEl.style.color = "#991b1b";
+                    statusEl.innerText = "OFFLINE"; 
+                    pillEl.style.background = "#fee2e2"; 
+                    pillEl.style.color = "#991b1b";
                 }
             })
             .catch(err => console.log(err));
     }
+    
     setInterval(cekDeviceOnline, 5000);
     cekDeviceOnline();
 
@@ -394,7 +605,9 @@
                 const link = document.createElement("a");
                 link.setAttribute("href", URL.createObjectURL(blob));
                 link.setAttribute("download", `Live_Data_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
-                document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                document.body.appendChild(link); 
+                link.click(); 
+                document.body.removeChild(link);
             });
     }
 
@@ -467,7 +680,9 @@
         let link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", document.getElementById('pilih-tanggal').value + ".csv");
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        document.body.appendChild(link); 
+        link.click(); 
+        document.body.removeChild(link);
     }
 
     // --- TRANSMISI EMAIL VIA WEB APP INTERMEDIARY ---
@@ -555,6 +770,27 @@
         });
     }
 
+    // --- FUNGSI QUICK SEARCH (PENCARIAN CEPAT) ---
+    function cariSiswa() {
+        const kataKunci = document.getElementById("input-cari-siswa").value.toLowerCase();
+        const tabel = document.getElementById("tabel-data");
+        const barisData = tabel.getElementsByTagName("tr");
+
+        for (let i = 0; i < barisData.length; i++) {
+            const kolomNama = barisData[i].getElementsByTagName("td")[0];
+            
+            if (kolomNama) {
+                const teksNama = kolomNama.textContent || kolomNama.innerText;
+                
+                if (teksNama.toLowerCase().indexOf(kataKunci) > -1) {
+                    barisData[i].style.display = "";
+                } else {
+                    barisData[i].style.display = "none";
+                }
+            }
+        }
+    }
+
     // --- ENFORCEMENT SESSION TIMEOUT ---
     function resetTimerTimeout() {
         clearTimeout(timeoutAktivitas);
@@ -563,34 +799,7 @@
             lakukanLogout();
         }, WAKTU_TIMEOUT);
     }
-    // --- FUNGSI QUICK SEARCH (PENCERIAN CEPAT) ---
-function cariSiswa() {
-    // Ambil teks yang diketik pengguna dan ubah ke huruf kecil
-    const kataKunci = document.getElementById("input-cari-siswa").value.toLowerCase();
     
-    // Ambil semua baris data di dalam tabel live
-    const tabel = document.getElementById("tabel-data");
-    const barisData = tabel.getElementsByTagName("tr");
-
-    // Lakukan perulangan untuk setiap baris tabel
-    for (let i = 0; i < barisData.length; i++) {
-        // Ambil kolom pertama (kolom Nama Siswa)
-        const kolomNama = barisData[i].getElementsByTagName("td")[0];
-        
-        if (kolomNama) {
-            const teksNama = kolomNama.textContent || kolomNama.innerText;
-            
-            // Jika nama cocok dengan kata kunci, tampilkan barisnya. Jika tidak, sembunyikan.
-            if (teksNama.toLowerCase().indexOf(kataKunci) > -1) {
-                barisData[i].style.display = "";
-            } else {
-                barisData[i].style.display = "none";
-            }
-        }
-    }
-}
-
-    // Pemicu reset timer aktivitas
     window.onload = resetTimerTimeout;
     document.onmousemove = resetTimerTimeout;
     document.onkeypress = resetTimerTimeout;
