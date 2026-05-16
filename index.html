@@ -214,6 +214,13 @@
             border-radius: 20px; 
             font-size: 12px; 
             font-weight: bold; 
+            animation: pulse 2s infinite; /* Efek kedip untuk menandakan LIVE */
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
         
         .badge { 
@@ -304,7 +311,7 @@
                             </tr>
                         </thead>
                         <tbody id="tabel-data">
-                            <tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan ke server...</td></tr>
+                            <tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan Realtime Stream...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -350,7 +357,7 @@
                 📥 Download
             </button>
 
-            <button onclick="window.open('https://docs.google.com/spreadsheets/d/1cg5meD7TcG0ULqDssanKtXdLTAJRNpOevxbcPkq1F_s/edit?gid=0#gid=0', '_blank')", 
+            <button onclick="window.open('https://docs.google.com/spreadsheets/d/1cg5meD7TcG0ULqDssanKtXdLTAJRNpOevxbcPkq1F_s/edit?gid=0#gid=0', '_blank')" 
                     style="padding: 10px 15px; background: #0f9d58; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
                 🟢 G-Sheets
             </button>
@@ -378,13 +385,18 @@
 <script>
     // --- KONFIGURASI ---
     const FIREBASE_URL = "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/";
-    const urlDataWeb = FIREBASE_URL + "data_web.json";
     
     let myChart = null; 
     let timeoutAktivitas; 
-    const WAKTU_TIMEOUT = 10 * 60 * 1000; // Timer diatur 10 menit
+    const WAKTU_TIMEOUT = 10 * 60 * 1000; // Timer sesi 10 menit
     
-    let intervalSync; 
+    // Variabel Penampung Data Realtime
+    let streamDataWeb = null;
+    let streamDevice = null;
+    let localDataWeb = {}; 
+    let localLastSeen = 0;
+    let intervalCekUI = null;
+    
     let dataHarianSaatIni = []; 
 
     // --- FUNGSI NAVIGASI ANTAR LAYAR ---
@@ -398,7 +410,7 @@
         document.getElementById("dashboard-screen").style.display = "block";
     }
 
-    // --- FUNGSI LOGIN (SINKRONISASI SEAMAN MUNGKIN VIA FIREBASE) ---
+    // --- FUNGSI LOGIN (SINKRONISASI VIA FIREBASE) ---
     function cekLogin() {
         const user = document.getElementById("in-user").value;
         const pass = document.getElementById("in-pass").value;
@@ -413,7 +425,6 @@
         btnLogin.innerText = "⏳ Mengecek...";
         btnLogin.disabled = true;
 
-        // Ambil data admin_auth langsung dari Firebase secara real-time
         fetch(FIREBASE_URL + "admin_auth.json")
             .then(res => res.json())
             .then(data => {
@@ -424,8 +435,7 @@
                     
                     document.body.style.alignItems = "flex-start"; 
                     
-                    ambilDataFirebase();
-                    intervalSync = setInterval(ambilDataFirebase, 5000);
+                    mulaiRealtimeListener(); // 🚀 Memulai mode ONVALUE (Push Notif)
                     loadDaftarTanggal(); 
                     resetTimerTimeout(); 
                 } else {
@@ -449,7 +459,7 @@
 
     // --- FUNGSI LOGOUT ---
     function lakukanLogout() {
-        clearInterval(intervalSync); 
+        hentikanRealtimeListener(); // ⏹️ Matikan koneksi streaming jika logout
         clearTimeout(timeoutAktivitas);
         
         document.getElementById("in-user").value = "";
@@ -462,153 +472,174 @@
         document.body.style.alignItems = "center"; 
     }
 
-    // --- FUNGSI TARIK DATA FIREBASE (LIVE) ---
-    function ambilDataFirebase() {
-        fetch(urlDataWeb)
-            .then(res => res.json())
-            .then(data => {
-                const tbody = document.getElementById('tabel-data');
-                if (!data) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
-                    document.getElementById('total-absen').innerText = "0";
-                    updateGrafik(0, 0);
-                    return;
+    // =========================================================
+    // 🚀 SISTEM BARU: REALTIME LISTENER (SERVER-SENT EVENTS)
+    // Berfungsi layaknya `onValue` tanpa perlu import Firebase SDK
+    // =========================================================
+    function mulaiRealtimeListener() {
+        // 1. Listener Tabel Data Absen
+        streamDataWeb = new EventSource(FIREBASE_URL + "data_web.json");
+        streamDataWeb.addEventListener('put', function(e) {
+            const payload = JSON.parse(e.data);
+            
+            // payload.path == "/" berarti sinkronisasi awal (semua data masuk sekaligus)
+            if (payload.path === "/") {
+                localDataWeb = payload.data || {};
+            } 
+            // Update delta/parsial (jika ada yg dihapus/ditambah)
+            else {
+                const key = payload.path.replace("/", "");
+                if (payload.data === null) {
+                    delete localDataWeb[key];
+                } else {
+                    localDataWeb[key] = payload.data;
                 }
-                
-                const arrayKeys = Object.keys(data).reverse();
-                document.getElementById('total-absen').innerText = arrayKeys.length;
+            }
+            
+            // Refresh tabel tanpa perlu request ulang ke server
+            renderTabelData(localDataWeb);
+        });
 
-                let html = '';
-                let jumlahHadir = 0;
-                let jumlahTerlambat = 0;
+        // 2. Listener Status Device Online/Offline
+        streamDevice = new EventSource(FIREBASE_URL + "device_status.json");
+        streamDevice.addEventListener('put', function(e) {
+            const payload = JSON.parse(e.data);
+            
+            if (payload.path === "/") {
+                if (payload.data && payload.data.last_seen) {
+                    localLastSeen = payload.data.last_seen - 25200; // Koreksi zona waktu jika perlu
+                }
+            } else if (payload.path === "/last_seen") {
+                localLastSeen = payload.data - 25200;
+            }
+            updateStatusUI();
+        });
 
-                const JAM_MASUK = 7;   
-                const MENIT_MASUK = 0; 
+        // Pengecekan lokal untuk indikator Offline jika Wemos mendadak mati (tanpa sedot kuota API)
+        intervalCekUI = setInterval(updateStatusUI, 5000);
+    }
 
-                arrayKeys.forEach(key => {
-                    let item = data[key];
-                    
-                    let stringJamLengkap = item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu;
-                    let waktuBagian = stringJamLengkap.split(':');
-                    let jamSiswa = parseInt(waktuBagian[0]);
-                    let menitSiswa = parseInt(waktuBagian[1]);
+    function hentikanRealtimeListener() {
+        if (streamDataWeb) streamDataWeb.close();
+        if (streamDevice) streamDevice.close();
+        if (intervalCekUI) clearInterval(intervalCekUI);
+    }
 
-                    let statusTeks = "Tepat Waktu ⚡";
-                    let statusClass = "status-realtime"; 
+    // --- FUNGSI RENDER TABEL (Dipanggil otomatis oleh Listener) ---
+    function renderTabelData(data) {
+        const tbody = document.getElementById('tabel-data');
+        if (!data || Object.keys(data).length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
+            document.getElementById('total-absen').innerText = "0";
+            updateGrafik(0, 0);
+            return;
+        }
+        
+        const arrayKeys = Object.keys(data).reverse();
+        document.getElementById('total-absen').innerText = arrayKeys.length;
 
-                    if (jamSiswa > JAM_MASUK || (jamSiswa === JAM_MASUK && menitSiswa > MENIT_MASUK)) {
-                        statusTeks = "Terlambat ⚠️";
-                        statusClass = "status-sync"; 
-                        jumlahTerlambat++; 
-                    } else {
-                        jumlahHadir++; 
-                    }
+        let html = '';
+        let jumlahHadir = 0;
+        let jumlahTerlambat = 0;
 
-                    html += `
-                        <tr>
-                            <td style="font-weight: 600;">${item.nama}</td>
-                            <td style="color: #64748b; font-size: 13px;">${item.waktu}</td>
-                            <td style="text-align: center;">
-                                <span class="${statusClass}">${statusTeks}</span>
-                            </td>
-                            <td style="text-align: center;">
-                                <button onclick="hapusSatu('${key}')" style="border:none; background:transparent; color:#dc2626; cursor:pointer; font-size:16px;" title="Hapus Data ini">✕</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                tbody.innerHTML = html;
-                
-                updateGrafik(jumlahHadir, jumlahTerlambat);
-                cariSiswa();
-            })
-            .catch(err => {
-                console.error("Error:", err);
-                document.getElementById('tabel-data').innerHTML = '<tr><td colspan="4" style="text-align:center; color: red;">Gagal terhubung ke database.</td></tr>';
-            });
+        const JAM_MASUK = 7;   
+        const MENIT_MASUK = 0; 
+
+        arrayKeys.forEach(key => {
+            let item = data[key];
+            
+            let stringJamLengkap = item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu;
+            let waktuBagian = stringJamLengkap.split(':');
+            let jamSiswa = parseInt(waktuBagian[0]);
+            let menitSiswa = parseInt(waktuBagian[1]);
+
+            let statusTeks = "Tepat Waktu ⚡";
+            let statusClass = "status-realtime"; 
+
+            if (jamSiswa > JAM_MASUK || (jamSiswa === JAM_MASUK && menitSiswa > MENIT_MASUK)) {
+                statusTeks = "Terlambat ⚠️";
+                statusClass = "status-sync"; 
+                jumlahTerlambat++; 
+            } else {
+                jumlahHadir++; 
+            }
+
+            html += `
+                <tr>
+                    <td style="font-weight: 600;">${item.nama}</td>
+                    <td style="color: #64748b; font-size: 13px;">${item.waktu}</td>
+                    <td style="text-align: center;">
+                        <span class="${statusClass}">${statusTeks}</span>
+                    </td>
+                    <td style="text-align: center;">
+                        <button onclick="hapusSatu('${key}')" style="border:none; background:transparent; color:#dc2626; cursor:pointer; font-size:16px;" title="Hapus Data ini">✕</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+        
+        updateGrafik(jumlahHadir, jumlahTerlambat);
+        cariSiswa(); // Tetap jalankan filter jika user sedang mencari nama tertentu
+    }
+
+    // --- FUNGSI UPDATE UI INDIKATOR ONLINE/OFFLINE ---
+    function updateStatusUI() {
+        const sekarang = Math.floor(Date.now() / 1000);
+        const selisih = sekarang - localLastSeen;
+
+        const statusEl = document.getElementById("device-status");
+        const pillEl = document.getElementById("device-pill");
+
+        // Jika tidak ada detak jantung dari alat selama 20 detik, ubah jadi Offline
+        if (selisih >= 0 && selisih < 20) {
+            statusEl.innerText = "ONLINE"; 
+            pillEl.style.background = "#dcfce7"; 
+            pillEl.style.color = "#166534";
+        } else {
+            statusEl.innerText = "OFFLINE"; 
+            pillEl.style.background = "#fee2e2"; 
+            pillEl.style.color = "#991b1b";
+        }
     }
 
     // --- FUNGSI HAPUS DATA LIVE ---
     function hapusSatu(key) {
+        // Cukup kirim perintah DELETE, tabel akan refresh otomatis oleh Listener!
         if (confirm("Apakah Anda yakin ingin menghapus data presensi ini?")) {
-            const urlHapus = urlDataWeb.replace('.json', '/' + key + '.json');
-            fetch(urlHapus, { method: 'DELETE' })
-                .then(res => { 
-                    if (res.ok) ambilDataFirebase(); 
-                    else alert("Gagal!"); 
-                });
+            const urlHapus = FIREBASE_URL + `data_web/${key}.json`;
+            fetch(urlHapus, { method: 'DELETE' }).catch(() => alert("Gagal!"));
         }
     }
 
     // --- FUNGSI HAPUS MASSAL ---
     function hapusSemua() {
         if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Cloud?")) {
-            fetch(urlDataWeb, { method: 'DELETE' })
-                .then(res => { 
-                    if (res.ok) { 
-                        alert("Dihapus!"); 
-                        ambilDataFirebase(); 
-                    } else {
-                        alert("Gagal!"); 
-                    }
-                });
+            fetch(FIREBASE_URL + "data_web.json", { method: 'DELETE' }).catch(() => alert("Gagal!"));
         }
     }
 
-    // --- CEK DEVICE ONLINE ---
-    function cekDeviceOnline() {
-        const statusUrl = FIREBASE_URL + "device_status.json";
-        fetch(statusUrl)
-            .then(res => res.json())
-            .then(data => {
-                if (!data) return;
-                const lastSeen = data.last_seen - 25200; 
-                const sekarang = Math.floor(Date.now() / 1000);
-                const selisih = sekarang - lastSeen;
-
-                const statusEl = document.getElementById("device-status");
-                const pillEl = document.getElementById("device-pill");
-
-                if (selisih >= 0 && selisih < 20) {
-                    statusEl.innerText = "ONLINE"; 
-                    pillEl.style.background = "#dcfce7"; 
-                    pillEl.style.color = "#166534";
-                } else {
-                    statusEl.innerText = "OFFLINE"; 
-                    pillEl.style.background = "#fee2e2"; 
-                    pillEl.style.color = "#991b1b";
-                }
-            })
-            .catch(err => console.log(err));
-    }
-    
-    setInterval(cekDeviceOnline, 5000);
-    cekDeviceOnline();
-
-    // --- DOWNLOAD CSV (LIVE DATA) ---
+    // --- DOWNLOAD CSV (LIVE DATA) - Sekarang sinkron tanpa loading! ---
     function downloadCSV() {
-        fetch(urlDataWeb)
-            .then(res => res.json())
-            .then(data => {
-                if (!data) return alert("Tidak ada data untuk diunduh!");
-                const arrayData = Object.values(data);
-                let csvContent = "Nama Siswa,Waktu Tap,Status\n";
+        if (Object.keys(localDataWeb).length === 0) return alert("Tidak ada data untuk diunduh!");
+        
+        const arrayData = Object.values(localDataWeb);
+        let csvContent = "Nama Siswa,Waktu Tap,Status\n";
 
-                arrayData.forEach(item => {
-                    let nama = item.nama.replace(/,/g, ""); 
-                    let waktu = item.waktu;
-                    let status = (item.status || "Realtime").replace(/⚡|🔄/g, "").trim(); 
-                    csvContent += `${nama},${waktu},${status}\n`;
-                });
+        arrayData.forEach(item => {
+            let nama = item.nama.replace(/,/g, ""); 
+            let waktu = item.waktu;
+            let status = (item.status || "Realtime").replace(/⚡|🔄/g, "").trim(); 
+            csvContent += `${nama},${waktu},${status}\n`;
+        });
 
-                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                const link = document.createElement("a");
-                link.setAttribute("href", URL.createObjectURL(blob));
-                link.setAttribute("download", `Live_Data_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
-                document.body.appendChild(link); 
-                link.click(); 
-                document.body.removeChild(link);
-            });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.setAttribute("href", URL.createObjectURL(blob));
+        link.setAttribute("download", `Live_Data_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
+        document.body.appendChild(link); 
+        link.click(); 
+        document.body.removeChild(link);
     }
 
     // --- LOGIKA ARSIP GOOGLE SHEETS ---
@@ -780,7 +811,7 @@
             const kolomNama = barisData[i].getElementsByTagName("td")[0];
             
             if (kolomNama) {
-                const teksNama = kolomNama.textContent || kolomNama.innerText;
+                const teksNama = kolom:Nama.textContent || kolomNama.innerText;
                 
                 if (teksNama.toLowerCase().indexOf(kataKunci) > -1) {
                     barisData[i].style.display = "";
