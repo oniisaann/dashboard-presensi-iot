@@ -811,7 +811,7 @@
             const kolomNama = barisData[i].getElementsByTagName("td")[0];
             
             if (kolomNama) {
-                const teksNama = kolom:Nama.textContent || kolomNama.innerText;
+                const teksNama = kolomNama.textContent || kolomNama.innerText;
                 
                 if (teksNama.toLowerCase().indexOf(kataKunci) > -1) {
                     barisData[i].style.display = "";
