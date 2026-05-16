@@ -180,10 +180,6 @@
             </button>
         </div>
     </div>
-    <div style="margin-bottom: 15px;">
-    <input type="text" id="input-cari-arsip" onkeyup="cariSiswaArsip()" placeholder="🔍 Cari nama siswa di arsip harian..." 
-           style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; transition: 0.3s;">
-    </div>
     <div class="table-container">
         <table style="text-align: center;">
             <tbody id="isi-arsip">
@@ -502,38 +498,6 @@ function cariSiswa() {
                 barisData[i].style.display = "";
             } else {
                 barisData[i].style.display = "none";
-            }
-        }
-    }
-}
-// --- FUNGSI QUICK SEARCH KHUSUS TABEL ARSIP ---
-function cariSiswaArsip() {
-    // Ambil teks pencarian
-    const kataKunci = document.getElementById("input-cari-arsip").value.toLowerCase();
-    
-    // Ambil semua baris di dalam tbody isi-arsip
-    const tabel = document.getElementById("isi-arsip");
-    const barisData = tabel.getElementsByTagName("tr");
-
-    // Perulangan mulai dari baris ke-0 karena sub-header Anda sudah dipisah di tthead/style tersendiri
-    for (let i = 0; i < barisData.length; i++) {
-        // Pada struktur rekap harian Anda, kolom Nama biasanya ada di kolom pertama (index 0) atau kedua (index 1)
-        // Kita ambil kolom pertama yang berisi teks nama siswa
-        const kolomNama = barisData[i].getElementsByTagName("td")[0] || barisData[i].getElementsByTagName("th")[0];
-        
-        if (kolomNama) {
-            const teksNama = kolomNama.textContent || kolomNama.innerText;
-            
-            // Lewati jika ini adalah baris pesan "Memuat data..." atau "Data kosong"
-            if (teksNama.includes("Silakan pilih") || teksNama.includes("Memuat") || teksNama.includes("Data kosong")) {
-                continue;
-            }
-
-            // Validasi kecocokan karakter
-            if (teksNama.toLowerCase().indexOf(kataKunci) > -1) {
-                barisData[i].style.style.display = ""; // Tampilkan
-            } else {
-                barisData[i].style.display = "none"; // Sembunyikan
             }
         }
     }
