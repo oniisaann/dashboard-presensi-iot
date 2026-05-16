@@ -278,7 +278,7 @@
             if (!data) {
                 tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
                 document.getElementById('total-absen').innerText = "0";
-                updateGrafik(0, 0); // Reset grafik jadi kosong
+                updateGrafik(0, 0);
                 return;
             }
             
@@ -289,16 +289,29 @@
             let jumlahHadir = 0;
             let jumlahTerlambat = 0;
 
+            // --- ATUR JAM MASUK SEKOLAH DI SINI ---
+            const JAM_MASUK = 7;   // Jam 7
+            const MENIT_MASUK = 0; // Menit 00 (07:00)
+
             arrayKeys.forEach(key => {
                 let item = data[key];
-                let statusTeks = item.status || "Realtime ⚡"; 
-                let statusClass = statusTeks.includes("Sync") ? "status-sync" : "status-realtime";
+                
+                // 1. Ambil teks jam dari Firebase (Contoh isi item.waktu: "07:05:23")
+                // Kita pecah berdasarkan tanda titik dua (:)
+                let waktuBagian = item.waktu.split(':');
+                let jamSiswa = parseInt(waktuBagian[0]);
+                let menitSiswa = parseInt(waktuBagian[1]);
 
-                // Hitung data statistik berdasarkan teks keterangan
-                if (statusTeks.includes("Terlambat")) {
-                    jumlahTerlambat++;
+                // 2. Logika Menentukan Terlambat atau Tepat Waktu
+                let statusTeks = "Tepat Waktu ⚡";
+                let statusClass = "status-realtime"; // Warna hijau bawaan css Anda
+
+                if (jamSiswa > JAM_MASUK || (jamSiswa === JAM_MASUK && menitSiswa > MENIT_MASUK)) {
+                    statusTeks = "Terlambat ⚠️";
+                    statusClass = "status-sync"; // Ubah jadi class warna merah/kuning Anda
+                    jumlahTerlambat++; // Tambah hitungan grafik merah
                 } else {
-                    jumlahHadir++;
+                    jumlahHadir++; // Tambah hitungan grafik hijau
                 }
 
                 html += `
@@ -316,7 +329,7 @@
             });
             tbody.innerHTML = html;
             
-            // Perbarui visualisasi grafik setiap data Firebase diperbarui
+            // Lempar hasil hitungan lokal ke Chart.js
             updateGrafik(jumlahHadir, jumlahTerlambat);
         })
             .catch(err => {
