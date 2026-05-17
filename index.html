@@ -356,6 +356,10 @@
             <button onclick="downloadCSVHarian()" style="padding: 10px 15px; background: #059669; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
                 📥 Download
             </button>
+            
+            <button onclick="hapusArsipHarian()" style="padding: 10px 15px; background: #ef4444; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                🗑️ Hapus
+            </button>
 
             <button onclick="window.open('https://docs.google.com/spreadsheets/d/1cg5meD7TcG0ULqDssanKtXdLTAJRNpOevxbcPkq1F_s/edit?gid=0#gid=0', '_blank')" 
                     style="padding: 10px 15px; background: #0f9d58; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 5px;">
@@ -640,6 +644,41 @@
         document.body.appendChild(link); 
         link.click(); 
         document.body.removeChild(link);
+    }
+    
+    // --- FUNGSI HAPUS ARSIP HARIAN SECARA MANUAL ---
+    function hapusArsipHarian() {
+        let namaSheet = document.getElementById('pilih-tanggal').value;
+        if(!namaSheet) return alert("Silakan pilih tanggal arsip yang ingin dihapus terlebih dahulu!");
+
+        // Ekstrak nama tanggal agar pop-up lebih enak dibaca (contoh: 17May2026)
+        let tanggalBersih = namaSheet.replace('ABSEN_', '');
+
+        if (confirm(`⚠️ PERINGATAN: Anda yakin ingin menghapus arsip data tanggal ${tanggalBersih}? Data yang dihapus dari Cloud tidak dapat dikembalikan!`)) {
+            
+            const urlHapus = FIREBASE_URL + "rekap_harian/" + namaSheet + ".json";
+            
+            fetch(urlHapus, { method: 'DELETE' })
+                .then(res => {
+                    if (res.ok) {
+                        alert(`✅ Arsip tanggal ${tanggalBersih} berhasil dihapus!`);
+                        
+                        // 1. Refresh isi dropdown tanggal (agar tanggal yang dihapus hilang)
+                        loadDaftarTanggal(); 
+                        
+                        // 2. Kosongkan tampilan tabel di layar
+                        document.getElementById('isi-arsip').innerHTML = '<tr><td style="padding: 30px; color: #94a3b8;">Silakan pilih tanggal dan klik "Lihat Data"</td></tr>';
+                        
+                        // 3. Kosongkan memori variabel lokal agar tidak bocor jika di-download
+                        dataHarianSaatIni = []; 
+                    } else {
+                        alert("❌ Gagal menghapus arsip!");
+                    }
+                })
+                .catch(err => {
+                    alert("Kesalahan jaringan: " + err);
+                });
+        }
     }
 
     // --- LOGIKA ARSIP GOOGLE SHEETS ---
