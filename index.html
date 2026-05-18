@@ -109,7 +109,7 @@
         .node-btn {
             background: #f1f5f9;
             border: 2px solid #cbd5e1;
-            padding: 30px 15px;
+            padding: 25px 15px;
             border-radius: 12px;
             cursor: pointer;
             transition: 0.3s;
@@ -299,7 +299,7 @@
 
 <div id="node-screen">
     <h2 style="color: var(--primary); margin-top: 0;">Pilih Gerbang</h2>
-    <p style="color: var(--text-light); font-size: 14px;">Silakan pilih node alat yang ingin dipantau</p>
+    <p style="color: var(--text-light); font-size: 14px; margin-bottom: 15px;">Silakan pilih node alat yang ingin dipantau</p>
     
     <div class="node-grid">
         <button class="node-btn" onclick="pilihNode(1)">
@@ -311,6 +311,25 @@
             <span style="font-size:12px; font-weight:normal; color:#64748b;">Gerbang Belakang</span>
         </button>
     </div>
+
+    <div style="margin-top: 25px; text-align: left;">
+        <span style="font-size: 11px; font-weight: bold; color: var(--text-light); letter-spacing: 0.5px;">📋 5 TAP TERAKHIR (SEMUA GERBANG)</span>
+        <div class="table-container" style="max-height: 180px; margin-top: 8px; background: #fafafa;">
+            <table style="font-size: 12px; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="padding: 8px;">Nama Siswa</th>
+                        <th style="padding: 8px;">Waktu</th>
+                        <th style="padding: 8px; text-align: center;">Node</th>
+                    </tr>
+                </thead>
+                <tbody id="tabel-terakhir-gabungan">
+                    <tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">Memuat riwayat...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <button class="btn-logout" style="margin-top: 25px; width: 100%;" onclick="lakukanLogout()">LOGOUT</button>
 </div>
 
@@ -442,7 +461,7 @@
     const WAKTU_TIMEOUT = 10 * 60 * 1000; // Timer sesi 10 menit
     
     // Variabel Penampung Data Realtime & Suffix Node
-    let currentNodeSuffix = ""; // Kosong untuk Node 1, "2" untuk Node 2
+    let currentNodeSuffix = ""; 
     let streamDataWeb = null;
     let streamDevice = null;
     let localDataWeb = {}; 
@@ -462,11 +481,12 @@
     }
 
     function gantiNode() {
-        hentikanRealtimeListener(); // Matikan stream node sebelumnya
+        hentikanRealtimeListener(); 
         document.getElementById("dashboard-screen").style.display = "none";
         document.getElementById("arsip-screen").style.display = "none";
         document.getElementById("node-screen").style.display = "block";
         document.body.style.alignItems = "center"; 
+        muatTapTerakhirGabungan(); // 🔄 Tarik riwayat gabungan saat kembali ke menu pemilihan
     }
 
     // --- FUNGSI LOGIN ---
@@ -490,9 +510,8 @@
                 if (data && user === data.username && pass === data.password) {
                     document.getElementById("login-error").style.display = "none";
                     document.getElementById("login-screen").style.display = "none";
-                    
-                    // Arahkan ke Layar Pemilihan Node
                     document.getElementById("node-screen").style.display = "block"; 
+                    muatTapTerakhirGabungan(); // 🔄 Tarik riwayat gabungan saat login sukses
                 } else {
                     document.getElementById("login-error").innerText = "Username atau Password salah!";
                     document.getElementById("login-error").style.display = "block";
@@ -512,24 +531,76 @@
         if (event.key === "Enter") cekLogin();
     });
 
+    // --- 📊 LOGIKA BARU: MEMUAT 5 TAP TERAKHIR DARI KE-2 NODE SEKALIGUS ---
+    function muatTapTerakhirGabungan() {
+        const tbody = document.getElementById('tabel-terakhir-gabungan');
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">⏳ Memuat riwayat...</td></tr>';
+
+        Promise.all([
+            fetch(FIREBASE_URL + "data_web.json").then(r => r.json()),
+            fetch(FIREBASE_URL + "data_web2.json").then(r => r.json())
+        ])
+        .then(([node1, node2]) => {
+            let listGabungan = [];
+
+            // Ekstrak data Node 1
+            if (node1) {
+                Object.keys(node1).forEach(key => {
+                    listGabungan.push({ ...node1[key], key: key, labelNode: "Node 1" });
+                });
+            }
+            // Ekstrak data Node 2
+            if (node2) {
+                Object.keys(node2).forEach(key => {
+                    listGabungan.push({ ...node2[key], key: key, labelNode: "Node 2" });
+                });
+            }
+
+            // Urutkan berdasarkan Firebase Push Key (kronologis terbalik / terbaru di atas)
+            listGabungan.sort((a, b) => b.key.localeCompare(a.key));
+
+            // Potong ambil 5 data teratas saja
+            let limaTerakhir = listGabungan.slice(0, 5);
+
+            if (limaTerakhir.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">Belum ada riwayat presensi hari ini.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            limaTerakhir.forEach(item => {
+                let badgeNode = item.labelNode === "Node 1" 
+                    ? `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 1</span>`
+                    : `<span style="background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 2</span>`;
+                
+                html += `
+                    <tr>
+                        <td style="font-weight:600; padding:8px;">${item.nama}</td>
+                        <td style="color:#64748b; padding:8px;">${item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu}</td>
+                        <td style="text-align:center; padding:8px;">${badgeNode}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        })
+        .catch(err => {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--danger); padding: 15px;">⚠️ Gagal memuat riwayat terbaru.</td></tr>';
+        });
+    }
+
     // --- FUNGSI PEMILIHAN NODE (GERBANG 1 / 2) ---
     function pilihNode(nodeNumber) {
-        // Tentukan suffix API ( "" untuk Node 1, "2" untuk Node 2 )
         currentNodeSuffix = nodeNumber === 1 ? "" : "2";
 
-        // Ganti teks judul di Dashboard
         const titleText = nodeNumber === 1 ? "Node 1 - Gerbang Utama" : "Node 2 - Gerbang Belakang";
         document.getElementById("title-node-indicator").innerText = titleText;
 
-        // Reset UI Data sebelum masuk
         document.getElementById('tabel-data').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan Realtime Stream...</td></tr>';
         
-        // Pindah Layar
         document.getElementById("node-screen").style.display = "none";
         document.getElementById("dashboard-screen").style.display = "block";
         document.body.style.alignItems = "flex-start"; 
         
-        // Mulai Stream Firebase sesuai Node yang dipilih
         mulaiRealtimeListener(); 
         loadDaftarTanggal(); 
         resetTimerTimeout(); 
@@ -552,14 +623,13 @@
     }
 
     // =========================================================
-    // 🚀 SISTEM BARU: REALTIME LISTENER (SERVER-SENT EVENTS)
+    // 🚀 SISTEM REALTIME LISTENER (SERVER-SENT EVENTS)
     // =========================================================
     function mulaiRealtimeListener() {
-        localDataWeb = {}; // Reset data lokal absensi
-        localLastSeen = 0; // 🛠️ FIX 1: Reset memori timestamp (last seen) saat pindah node
-        updateStatusUI();  // 🛠️ FIX 2: Tampilkan status 'Checking...' sebelum divonis Offline
+        localDataWeb = {}; 
+        localLastSeen = 0; 
+        updateStatusUI();  
         
-        // 1. Listener Tabel Data Absen Dinamis ( data_web / data_web2 )
         streamDataWeb = new EventSource(FIREBASE_URL + "data_web" + currentNodeSuffix + ".json");
         streamDataWeb.addEventListener('put', function(e) {
             const payload = JSON.parse(e.data);
@@ -578,7 +648,6 @@
             renderTabelData(localDataWeb);
         });
 
-        // 2. Listener Status Device Online/Offline Dinamis ( device_status / device_status2 )
         streamDevice = new EventSource(FIREBASE_URL + "device_status" + currentNodeSuffix + ".json");
         streamDevice.addEventListener('put', function(e) {
             const payload = JSON.parse(e.data);
@@ -667,7 +736,6 @@
         const pillEl = document.getElementById("device-pill");
         const lastSeenEl = document.getElementById("last-seen-time");
 
-        // Tahan status 'Checking...' jika baru masuk (data belum ditarik)
         if (localLastSeen === 0) {
             statusEl.innerText = "Checking...";
             pillEl.style.background = "#e2e8f0";
@@ -679,8 +747,6 @@
         const sekarang = Math.floor(Date.now() / 1000);
         const selisih = sekarang - localLastSeen;
 
-        // 🛠️ PERBAIKAN: Menoleransi angka minus (selisih >= -60)
-        // Ini memastikan jika jam Wemos lebih cepat beberapa detik, tidak langsung dianggap mati.
         if (selisih >= -60 && selisih <= 60) {
             statusEl.innerText = "ONLINE"; 
             pillEl.style.background = "#dcfce7"; 
@@ -754,9 +820,7 @@
         let tanggalBersih = namaSheet.replace('ABSEN_', '');
 
         if (confirm(`⚠️ PERINGATAN: Anda yakin ingin menghapus arsip data tanggal ${tanggalBersih}? Data yang dihapus dari Cloud tidak dapat dikembalikan!`)) {
-            
             const urlHapus = FIREBASE_URL + "rekap_harian/" + namaSheet + ".json";
-            
             fetch(urlHapus, { method: 'DELETE' })
                 .then(res => {
                     if (res.ok) {
