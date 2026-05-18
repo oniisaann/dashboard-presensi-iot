@@ -667,7 +667,7 @@
         const pillEl = document.getElementById("device-pill");
         const lastSeenEl = document.getElementById("last-seen-time");
 
-        // 🛠️ FIX 3: Tahan status 'Checking...' jika baru klik Node (data belum ditarik)
+        // Tahan status 'Checking...' jika baru masuk (data belum ditarik)
         if (localLastSeen === 0) {
             statusEl.innerText = "Checking...";
             pillEl.style.background = "#e2e8f0";
@@ -679,10 +679,9 @@
         const sekarang = Math.floor(Date.now() / 1000);
         const selisih = sekarang - localLastSeen;
 
-        // 🛠️ FIX 4: Toleransi waktu diperlebar jadi 40 detik. 
-        // Wemos mengirim detak setiap 10 detik, toleransi 40 detik sangat aman 
-        // walau Wemos sedang sibuk proses hal lain.
-        if (selisih >= 0 && selisih <= 40) {
+        // 🛠️ PERBAIKAN: Menoleransi angka minus (selisih >= -60)
+        // Ini memastikan jika jam Wemos lebih cepat beberapa detik, tidak langsung dianggap mati.
+        if (selisih >= -60 && selisih <= 60) {
             statusEl.innerText = "ONLINE"; 
             pillEl.style.background = "#dcfce7"; 
             pillEl.style.color = "#166534";
