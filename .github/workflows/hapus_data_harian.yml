@@ -10,9 +10,12 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Menghapus Data Realtime Database
+      - name: Menghapus Data Realtime Database Semua Node
         run: |
-          # Perintah untuk menghapus folder data_web (Dashboard)
+          # Perintah untuk menghapus folder data_web (Dashboard Node 1 - 4)
           curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/data_web.json"
+          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/data_web2.json"
+          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/data_web3.json"
+          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/data_web4.json"
           
-          echo "Pembersihan Cloud Berhasil!"
+          echo "Pembersihan Data Live Cloud (4 Node) Berhasil!"
