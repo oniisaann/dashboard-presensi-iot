@@ -31,8 +31,8 @@
             min-height: 100vh;
         }
         
-        /* --- STYLE UNTUK LOGIN --- */
-        #login-screen {
+        /* --- STYLE UNTUK LOGIN & NODE SELECTION --- */
+        #login-screen, #node-screen {
             background: var(--card); 
             padding: 40px 30px; 
             border-radius: 16px; 
@@ -40,6 +40,11 @@
             width: 100%; 
             max-width: 350px; 
             text-align: center;
+        }
+
+        #node-screen {
+            max-width: 450px;
+            display: none; /* Disembunyikan secara default */
         }
         
         .input-group { 
@@ -80,6 +85,7 @@
             font-weight: bold; 
             cursor: pointer; 
             margin-top: 10px;
+            transition: 0.2s;
         }
         
         .btn-login:hover { 
@@ -91,6 +97,36 @@
             font-size: 13px; 
             margin-top: 10px; 
             display: none; 
+        }
+
+        /* Tampilan Tombol Pemilihan Node */
+        .node-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .node-btn {
+            background: #f1f5f9;
+            border: 2px solid #cbd5e1;
+            padding: 30px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .node-btn:hover {
+            border-color: var(--primary);
+            background: #e0f2fe;
+            color: var(--primary);
         }
 
         /* --- STYLE DASHBOARD & ARSIP --- */
@@ -125,6 +161,7 @@
             margin: 5px 0 0 0; 
             color: var(--text-light); 
             font-size: 13px; 
+            font-weight: bold;
         }
         
         /* Tombol Navigasi Atas */
@@ -132,6 +169,7 @@
             display: flex; 
             gap: 10px; 
             align-items: center; 
+            flex-wrap: wrap;
         }
         
         .btn-nav { 
@@ -214,21 +252,13 @@
             border-radius: 20px; 
             font-size: 12px; 
             font-weight: bold; 
-            animation: pulse 2s infinite; /* Efek kedip untuk menandakan LIVE */
+            animation: pulse 2s infinite; 
         }
         
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.7; }
             100% { opacity: 1; }
-        }
-        
-        .badge { 
-            font-weight: bold; 
-            border-radius: 20px; 
-            font-size: 11px; 
-            text-transform: uppercase; 
-            white-space: nowrap; 
         }
         
         .status-realtime { 
@@ -269,18 +299,36 @@
     <div id="login-error">Username atau Password salah!</div>
 </div>
 
+<div id="node-screen">
+    <h2 style="color: var(--primary); margin-top: 0;">Pilih Gerbang</h2>
+    <p style="color: var(--text-light); font-size: 14px;">Silakan pilih node alat yang ingin dipantau</p>
+    
+    <div class="node-grid">
+        <button class="node-btn" onclick="pilihNode(1)">
+            🚪 Node 1
+            <span style="font-size:12px; font-weight:normal; color:#64748b;">Gerbang Utama</span>
+        </button>
+        <button class="node-btn" onclick="pilihNode(2)">
+            🚪 Node 2
+            <span style="font-size:12px; font-weight:normal; color:#64748b;">Gerbang Belakang</span>
+        </button>
+    </div>
+    <button class="btn-logout" style="margin-top: 25px; width: 100%;" onclick="lakukanLogout()">LOGOUT</button>
+</div>
+
 <div id="dashboard-screen">
     <div class="header">
         <div>
             <h1>☁️ Presensi Cloud</h1>
-            <p>SMA Muhammadiyah Sumowono</p>
+            <p id="title-node-indicator">SMA Muhammadiyah Sumowono</p>
         </div>
         <div class="header-buttons">
             <div id="device-pill" style="background: #e2e8f0; color: #64748b; padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; text-align: right; line-height: 1.3;">
                 <div>Device: <span id="device-status">Checking...</span></div>
                 <div id="last-seen-time" style="font-size: 9px; font-weight: normal; margin-top: 2px; display: none;"></div>
             </div>
-            <button class="btn-nav" onclick="bukaMenuArsip()">📂 Arsip Google Sheets</button>
+            <button class="btn-nav" onclick="gantiNode()">🔄 Ganti Node</button>
+            <button class="btn-nav" onclick="bukaMenuArsip()">📂 Arsip G-Sheets</button>
             <button class="btn-logout" onclick="lakukanLogout()">LOGOUT</button>
         </div>
     </div>
@@ -395,13 +443,13 @@
     let timeoutAktivitas; 
     const WAKTU_TIMEOUT = 10 * 60 * 1000; // Timer sesi 10 menit
     
-    // Variabel Penampung Data Realtime
+    // Variabel Penampung Data Realtime & Suffix Node
+    let currentNodeSuffix = ""; // Kosong untuk Node 1, "2" untuk Node 2
     let streamDataWeb = null;
     let streamDevice = null;
     let localDataWeb = {}; 
     let localLastSeen = 0;
     let intervalCekUI = null;
-    
     let dataHarianSaatIni = []; 
 
     // --- FUNGSI NAVIGASI ANTAR LAYAR ---
@@ -415,7 +463,15 @@
         document.getElementById("dashboard-screen").style.display = "block";
     }
 
-    // --- FUNGSI LOGIN (SINKRONISASI VIA FIREBASE) ---
+    function gantiNode() {
+        hentikanRealtimeListener(); // Matikan stream node sebelumnya
+        document.getElementById("dashboard-screen").style.display = "none";
+        document.getElementById("arsip-screen").style.display = "none";
+        document.getElementById("node-screen").style.display = "block";
+        document.body.style.alignItems = "center"; 
+    }
+
+    // --- FUNGSI LOGIN ---
     function cekLogin() {
         const user = document.getElementById("in-user").value;
         const pass = document.getElementById("in-pass").value;
@@ -436,13 +492,9 @@
                 if (data && user === data.username && pass === data.password) {
                     document.getElementById("login-error").style.display = "none";
                     document.getElementById("login-screen").style.display = "none";
-                    document.getElementById("dashboard-screen").style.display = "block";
                     
-                    document.body.style.alignItems = "flex-start"; 
-                    
-                    mulaiRealtimeListener(); // 🚀 Memulai mode ONVALUE (Push Notif)
-                    loadDaftarTanggal(); 
-                    resetTimerTimeout(); 
+                    // Arahkan ke Layar Pemilihan Node
+                    document.getElementById("node-screen").style.display = "block"; 
                 } else {
                     document.getElementById("login-error").innerText = "Username atau Password salah!";
                     document.getElementById("login-error").style.display = "block";
@@ -462,9 +514,32 @@
         if (event.key === "Enter") cekLogin();
     });
 
+    // --- FUNGSI PEMILIHAN NODE (GERBANG 1 / 2) ---
+    function pilihNode(nodeNumber) {
+        // Tentukan suffix API ( "" untuk Node 1, "2" untuk Node 2 )
+        currentNodeSuffix = nodeNumber === 1 ? "" : "2";
+
+        // Ganti teks judul di Dashboard
+        const titleText = nodeNumber === 1 ? "Node 1 - Gerbang Utama" : "Node 2 - Gerbang Belakang";
+        document.getElementById("title-node-indicator").innerText = titleText;
+
+        // Reset UI Data sebelum masuk
+        document.getElementById('tabel-data').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan Realtime Stream...</td></tr>';
+        
+        // Pindah Layar
+        document.getElementById("node-screen").style.display = "none";
+        document.getElementById("dashboard-screen").style.display = "block";
+        document.body.style.alignItems = "flex-start"; 
+        
+        // Mulai Stream Firebase sesuai Node yang dipilih
+        mulaiRealtimeListener(); 
+        loadDaftarTanggal(); 
+        resetTimerTimeout(); 
+    }
+
     // --- FUNGSI LOGOUT ---
     function lakukanLogout() {
-        hentikanRealtimeListener(); // ⏹️ Matikan koneksi streaming jika logout
+        hentikanRealtimeListener(); 
         clearTimeout(timeoutAktivitas);
         
         document.getElementById("in-user").value = "";
@@ -473,25 +548,25 @@
         
         document.getElementById("dashboard-screen").style.display = "none";
         document.getElementById("arsip-screen").style.display = "none";
+        document.getElementById("node-screen").style.display = "none";
         document.getElementById("login-screen").style.display = "block";
         document.body.style.alignItems = "center"; 
     }
 
     // =========================================================
     // 🚀 SISTEM BARU: REALTIME LISTENER (SERVER-SENT EVENTS)
-    // Berfungsi layaknya `onValue` tanpa perlu import Firebase SDK
     // =========================================================
     function mulaiRealtimeListener() {
-        // 1. Listener Tabel Data Absen
-        streamDataWeb = new EventSource(FIREBASE_URL + "data_web.json");
+        localDataWeb = {}; // Reset data lokal
+        
+        // 1. Listener Tabel Data Absen Dinamis ( data_web / data_web2 )
+        streamDataWeb = new EventSource(FIREBASE_URL + "data_web" + currentNodeSuffix + ".json");
         streamDataWeb.addEventListener('put', function(e) {
             const payload = JSON.parse(e.data);
             
-            // payload.path == "/" berarti sinkronisasi awal (semua data masuk sekaligus)
             if (payload.path === "/") {
                 localDataWeb = payload.data || {};
             } 
-            // Update delta/parsial (jika ada yg dihapus/ditambah)
             else {
                 const key = payload.path.replace("/", "");
                 if (payload.data === null) {
@@ -500,19 +575,17 @@
                     localDataWeb[key] = payload.data;
                 }
             }
-            
-            // Refresh tabel tanpa perlu request ulang ke server
             renderTabelData(localDataWeb);
         });
 
-        // 2. Listener Status Device Online/Offline
-        streamDevice = new EventSource(FIREBASE_URL + "device_status.json");
+        // 2. Listener Status Device Online/Offline Dinamis ( device_status / device_status2 )
+        streamDevice = new EventSource(FIREBASE_URL + "device_status" + currentNodeSuffix + ".json");
         streamDevice.addEventListener('put', function(e) {
             const payload = JSON.parse(e.data);
             
             if (payload.path === "/") {
                 if (payload.data && payload.data.last_seen) {
-                    localLastSeen = payload.data.last_seen - 25200; // Koreksi zona waktu jika perlu
+                    localLastSeen = payload.data.last_seen - 25200; 
                 }
             } else if (payload.path === "/last_seen") {
                 localLastSeen = payload.data - 25200;
@@ -520,7 +593,7 @@
             updateStatusUI();
         });
 
-        // Pengecekan lokal untuk indikator Offline jika Wemos mendadak mati (tanpa sedot kuota API)
+        if (intervalCekUI) clearInterval(intervalCekUI);
         intervalCekUI = setInterval(updateStatusUI, 5000);
     }
 
@@ -530,11 +603,11 @@
         if (intervalCekUI) clearInterval(intervalCekUI);
     }
 
-    // --- FUNGSI RENDER TABEL (Dipanggil otomatis oleh Listener) ---
+    // --- FUNGSI RENDER TABEL ---
     function renderTabelData(data) {
         const tbody = document.getElementById('tabel-data');
         if (!data || Object.keys(data).length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini di Node ini.</td></tr>';
             document.getElementById('total-absen').innerText = "0";
             updateGrafik(0, 0);
             return;
@@ -585,7 +658,7 @@
         tbody.innerHTML = html;
         
         updateGrafik(jumlahHadir, jumlahTerlambat);
-        cariSiswa(); // Tetap jalankan filter jika user sedang mencari nama tertentu
+        cariSiswa(); 
     }
 
     // --- FUNGSI UPDATE UI INDIKATOR ONLINE/OFFLINE + LAST SEEN ---
@@ -597,37 +670,26 @@
         const pillEl = document.getElementById("device-pill");
         const lastSeenEl = document.getElementById("last-seen-time");
 
-        // Jika ada detak jantung dari alat dalam 20 detik terakhir
         if (selisih >= 0 && selisih < 20) {
             statusEl.innerText = "ONLINE"; 
             pillEl.style.background = "#dcfce7"; 
             pillEl.style.color = "#166534";
-            
-            // Sembunyikan teks last seen karena alat sedang aktif
             lastSeenEl.style.display = "none";
         } 
-        // Jika alat terdeteksi mati/hilang kontak (Offline)
         else {
             statusEl.innerText = "OFFLINE"; 
             pillEl.style.background = "#fee2e2"; 
             pillEl.style.color = "#991b1b";
 
             if (localLastSeen > 0) {
-                // Ubah Timestamp Unix menjadi format tanggal & waktu objek JavaScript
-                // (Dikalikan 1000 karena JavaScript membaca dalam milidetik)
                 const waktuObjek = new Date(localLastSeen * 1000);
-                
-                // Format tanggal menjadi: Hari, DD MM YYYY
                 const opsiTanggal = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
                 const tanggalTeks = waktuObjek.toLocaleDateString('id-ID', opsiTanggal);
-                
-                // Format jam menjadi: HH.MM
                 const jamTeks = waktuObjek.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
 
-                // Tampilkan teks di bawah status OFFLINE
                 lastSeenEl.innerText = `Aktif: ${tanggalTeks} - ${jamTeks} WIB`;
                 lastSeenEl.style.display = "block";
-                lastSeenEl.style.color = "#b91c1c"; // Warna merah gelap agar serasi
+                lastSeenEl.style.color = "#b91c1c"; 
             } else {
                 lastSeenEl.innerText = "Belum pernah aktif";
                 lastSeenEl.style.display = "block";
@@ -637,21 +699,19 @@
 
     // --- FUNGSI HAPUS DATA LIVE ---
     function hapusSatu(key) {
-        // Cukup kirim perintah DELETE, tabel akan refresh otomatis oleh Listener!
         if (confirm("Apakah Anda yakin ingin menghapus data presensi ini?")) {
-            const urlHapus = FIREBASE_URL + `data_web/${key}.json`;
+            const urlHapus = FIREBASE_URL + `data_web${currentNodeSuffix}/${key}.json`;
             fetch(urlHapus, { method: 'DELETE' }).catch(() => alert("Gagal!"));
         }
     }
 
-    // --- FUNGSI HAPUS MASSAL ---
     function hapusSemua() {
-        if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Cloud?")) {
-            fetch(FIREBASE_URL + "data_web.json", { method: 'DELETE' }).catch(() => alert("Gagal!"));
+        if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Node ini?")) {
+            fetch(FIREBASE_URL + "data_web" + currentNodeSuffix + ".json", { method: 'DELETE' }).catch(() => alert("Gagal!"));
         }
     }
 
-    // --- DOWNLOAD CSV (LIVE DATA) - Sekarang sinkron tanpa loading! ---
+    // --- DOWNLOAD CSV (LIVE DATA) ---
     function downloadCSV() {
         if (Object.keys(localDataWeb).length === 0) return alert("Tidak ada data untuk diunduh!");
         
@@ -668,7 +728,8 @@
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.setAttribute("href", URL.createObjectURL(blob));
-        link.setAttribute("download", `Live_Data_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
+        let nodeLabel = currentNodeSuffix === "" ? "1" : "2";
+        link.setAttribute("download", `Live_Data_Node${nodeLabel}_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
         document.body.appendChild(link); 
         link.click(); 
         document.body.removeChild(link);
@@ -679,7 +740,6 @@
         let namaSheet = document.getElementById('pilih-tanggal').value;
         if(!namaSheet) return alert("Silakan pilih tanggal arsip yang ingin dihapus terlebih dahulu!");
 
-        // Ekstrak nama tanggal agar pop-up lebih enak dibaca (contoh: 17May2026)
         let tanggalBersih = namaSheet.replace('ABSEN_', '');
 
         if (confirm(`⚠️ PERINGATAN: Anda yakin ingin menghapus arsip data tanggal ${tanggalBersih}? Data yang dihapus dari Cloud tidak dapat dikembalikan!`)) {
@@ -690,14 +750,8 @@
                 .then(res => {
                     if (res.ok) {
                         alert(`✅ Arsip tanggal ${tanggalBersih} berhasil dihapus!`);
-                        
-                        // 1. Refresh isi dropdown tanggal (agar tanggal yang dihapus hilang)
                         loadDaftarTanggal(); 
-                        
-                        // 2. Kosongkan tampilan tabel di layar
                         document.getElementById('isi-arsip').innerHTML = '<tr><td style="padding: 30px; color: #94a3b8;">Silakan pilih tanggal dan klik "Lihat Data"</td></tr>';
-                        
-                        // 3. Kosongkan memori variabel lokal agar tidak bocor jika di-download
                         dataHarianSaatIni = []; 
                     } else {
                         alert("❌ Gagal menghapus arsip!");
