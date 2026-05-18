@@ -313,7 +313,7 @@
     </div>
 
     <div style="margin-top: 25px; text-align: left;">
-        <span style="font-size: 11px; font-weight: bold; color: var(--text-light); letter-spacing: 0.5px;">📋 5 TAP TERAKHIR (SEMUA GERBANG)</span>
+        <span style="font-size: 11px; font-weight: bold; color: var(--text-light); letter-spacing: 0.5px;">📋 5 TAP TERAKHIR (REALTIME GABUNGAN)</span>
         <div class="table-container" style="max-height: 180px; margin-top: 8px; background: #fafafa;">
             <table style="font-size: 12px; width: 100%;">
                 <thead>
@@ -324,7 +324,7 @@
                     </tr>
                 </thead>
                 <tbody id="tabel-terakhir-gabungan">
-                    <tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">Memuat riwayat...</td></tr>
+                    <tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">⏳ Menghubungkan Stream...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -458,9 +458,9 @@
     
     let myChart = null; 
     let timeoutAktivitas; 
-    const WAKTU_TIMEOUT = 10 * 60 * 1000; // Timer sesi 10 menit
+    const WAKTU_TIMEOUT = 10 * 60 * 1000; 
     
-    // Variabel Penampung Data Realtime & Suffix Node
+    // Variabel Stream Node Spesifik (Dashboard)
     let currentNodeSuffix = ""; 
     let streamDataWeb = null;
     let streamDevice = null;
@@ -468,6 +468,12 @@
     let localLastSeen = 0;
     let intervalCekUI = null;
     let dataHarianSaatIni = []; 
+
+    // Variabel Stream Gabungan Global (5 Tap Terakhir)
+    let streamGlobal1 = null;
+    let streamGlobal2 = null;
+    let globalData1 = {};
+    let globalData2 = {};
 
     // --- FUNGSI NAVIGASI ANTAR LAYAR ---
     function bukaMenuArsip() {
@@ -486,7 +492,9 @@
         document.getElementById("arsip-screen").style.display = "none";
         document.getElementById("node-screen").style.display = "block";
         document.body.style.alignItems = "center"; 
-        muatTapTerakhirGabungan(); // 🔄 Tarik riwayat gabungan saat kembali ke menu pemilihan
+        
+        // 🔄 Nyalakan stream global saat di menu pemilihan node
+        mulaiStreamTapTerakhir();
     }
 
     // --- FUNGSI LOGIN ---
@@ -511,7 +519,9 @@
                     document.getElementById("login-error").style.display = "none";
                     document.getElementById("login-screen").style.display = "none";
                     document.getElementById("node-screen").style.display = "block"; 
-                    muatTapTerakhirGabungan(); // 🔄 Tarik riwayat gabungan saat login sukses
+                    
+                    // 🔄 Nyalakan stream global saat login sukses
+                    mulaiStreamTapTerakhir();
                 } else {
                     document.getElementById("login-error").innerText = "Username atau Password salah!";
                     document.getElementById("login-error").style.display = "block";
@@ -531,70 +541,102 @@
         if (event.key === "Enter") cekLogin();
     });
 
-    // --- 📊 LOGIKA BARU: MEMUAT 5 TAP TERAKHIR DARI KE-2 NODE SEKALIGUS ---
-    function muatTapTerakhirGabungan() {
+    // =========================================================
+    // 📊 LOGIKA BARU: STREAM REALTIME 5 TAP TERAKHIR (GABUNGAN)
+    // =========================================================
+    function mulaiStreamTapTerakhir() {
+        globalData1 = {};
+        globalData2 = {};
+        
         const tbody = document.getElementById('tabel-terakhir-gabungan');
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">⏳ Memuat riwayat...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">⏳ Menghubungkan Stream...</td></tr>';
 
-        Promise.all([
-            fetch(FIREBASE_URL + "data_web.json").then(r => r.json()),
-            fetch(FIREBASE_URL + "data_web2.json").then(r => r.json())
-        ])
-        .then(([node1, node2]) => {
-            let listGabungan = [];
-
-            // Ekstrak data Node 1
-            if (node1) {
-                Object.keys(node1).forEach(key => {
-                    listGabungan.push({ ...node1[key], key: key, labelNode: "Node 1" });
-                });
+        // Listener untuk Gerbang 1
+        streamGlobal1 = new EventSource(FIREBASE_URL + "data_web.json");
+        streamGlobal1.addEventListener('put', function(e) {
+            const payload = JSON.parse(e.data);
+            if (payload.path === "/") {
+                globalData1 = payload.data || {};
+            } else {
+                const key = payload.path.replace("/", "");
+                if (payload.data === null) delete globalData1[key];
+                else globalData1[key] = payload.data;
             }
-            // Ekstrak data Node 2
-            if (node2) {
-                Object.keys(node2).forEach(key => {
-                    listGabungan.push({ ...node2[key], key: key, labelNode: "Node 2" });
-                });
+            renderTapTerakhirGabungan();
+        });
+
+        // Listener untuk Gerbang 2
+        streamGlobal2 = new EventSource(FIREBASE_URL + "data_web2.json");
+        streamGlobal2.addEventListener('put', function(e) {
+            const payload = JSON.parse(e.data);
+            if (payload.path === "/") {
+                globalData2 = payload.data || {};
+            } else {
+                const key = payload.path.replace("/", "");
+                if (payload.data === null) delete globalData2[key];
+                else globalData2[key] = payload.data;
             }
-
-            // Urutkan berdasarkan Firebase Push Key (kronologis terbalik / terbaru di atas)
-            listGabungan.sort((a, b) => b.key.localeCompare(a.key));
-
-            // Potong ambil 5 data teratas saja
-            let limaTerakhir = listGabungan.slice(0, 5);
-
-            if (limaTerakhir.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">Belum ada riwayat presensi hari ini.</td></tr>';
-                return;
-            }
-
-            let html = '';
-            limaTerakhir.forEach(item => {
-                let badgeNode = item.labelNode === "Node 1" 
-                    ? `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 1</span>`
-                    : `<span style="background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 2</span>`;
-                
-                html += `
-                    <tr>
-                        <td style="font-weight:600; padding:8px;">${item.nama}</td>
-                        <td style="color:#64748b; padding:8px;">${item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu}</td>
-                        <td style="text-align:center; padding:8px;">${badgeNode}</td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        })
-        .catch(err => {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:var(--danger); padding: 15px;">⚠️ Gagal memuat riwayat terbaru.</td></tr>';
+            renderTapTerakhirGabungan();
         });
     }
 
+    function hentikanStreamTapTerakhir() {
+        if (streamGlobal1) streamGlobal1.close();
+        if (streamGlobal2) streamGlobal2.close();
+    }
+
+    function renderTapTerakhirGabungan() {
+        let listGabungan = [];
+
+        // Gabungkan data
+        Object.keys(globalData1).forEach(key => {
+            listGabungan.push({ ...globalData1[key], key: key, labelNode: "Node 1" });
+        });
+        Object.keys(globalData2).forEach(key => {
+            listGabungan.push({ ...globalData2[key], key: key, labelNode: "Node 2" });
+        });
+
+        // Urutkan dari yang paling baru
+        listGabungan.sort((a, b) => b.key.localeCompare(a.key));
+        
+        // Ambil 5 teratas
+        let limaTerakhir = listGabungan.slice(0, 5);
+
+        const tbody = document.getElementById('tabel-terakhir-gabungan');
+
+        if (limaTerakhir.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">Belum ada riwayat presensi hari ini.</td></tr>';
+            return;
+        }
+
+        let html = '';
+        limaTerakhir.forEach(item => {
+            let badgeNode = item.labelNode === "Node 1" 
+                ? `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 1</span>`
+                : `<span style="background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 2</span>`;
+            
+            let stringJamLengkap = item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu;
+            
+            html += `
+                <tr>
+                    <td style="font-weight:600; padding:8px;">${item.nama}</td>
+                    <td style="color:#64748b; padding:8px;">${stringJamLengkap}</td>
+                    <td style="text-align:center; padding:8px;">${badgeNode}</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+
     // --- FUNGSI PEMILIHAN NODE (GERBANG 1 / 2) ---
     function pilihNode(nodeNumber) {
-        currentNodeSuffix = nodeNumber === 1 ? "" : "2";
+        // Matikan stream global agar hemat kuota saat masuk ke dashboard utama
+        hentikanStreamTapTerakhir();
 
+        currentNodeSuffix = nodeNumber === 1 ? "" : "2";
         const titleText = nodeNumber === 1 ? "Node 1 - Gerbang Utama" : "Node 2 - Gerbang Belakang";
         document.getElementById("title-node-indicator").innerText = titleText;
-
         document.getElementById('tabel-data').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan Realtime Stream...</td></tr>';
         
         document.getElementById("node-screen").style.display = "none";
@@ -609,6 +651,7 @@
     // --- FUNGSI LOGOUT ---
     function lakukanLogout() {
         hentikanRealtimeListener(); 
+        hentikanStreamTapTerakhir(); // Matikan juga stream global
         clearTimeout(timeoutAktivitas);
         
         document.getElementById("in-user").value = "";
@@ -623,7 +666,7 @@
     }
 
     // =========================================================
-    // 🚀 SISTEM REALTIME LISTENER (SERVER-SENT EVENTS)
+    // 🚀 SISTEM REALTIME LISTENER DASHBOARD
     // =========================================================
     function mulaiRealtimeListener() {
         localDataWeb = {}; 
