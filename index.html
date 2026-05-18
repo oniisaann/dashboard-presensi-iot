@@ -44,7 +44,7 @@
 
         #node-screen {
             max-width: 450px;
-            display: none; /* Disembunyikan secara default */
+            display: none; 
         }
         
         .input-group { 
@@ -99,7 +99,6 @@
             display: none; 
         }
 
-        /* Tampilan Tombol Pemilihan Node */
         .node-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -164,7 +163,6 @@
             font-weight: bold;
         }
         
-        /* Tombol Navigasi Atas */
         .header-buttons { 
             display: flex; 
             gap: 10px; 
@@ -557,7 +555,9 @@
     // 🚀 SISTEM BARU: REALTIME LISTENER (SERVER-SENT EVENTS)
     // =========================================================
     function mulaiRealtimeListener() {
-        localDataWeb = {}; // Reset data lokal
+        localDataWeb = {}; // Reset data lokal absensi
+        localLastSeen = 0; // 🛠️ FIX 1: Reset memori timestamp (last seen) saat pindah node
+        updateStatusUI();  // 🛠️ FIX 2: Tampilkan status 'Checking...' sebelum divonis Offline
         
         // 1. Listener Tabel Data Absen Dinamis ( data_web / data_web2 )
         streamDataWeb = new EventSource(FIREBASE_URL + "data_web" + currentNodeSuffix + ".json");
@@ -663,14 +663,26 @@
 
     // --- FUNGSI UPDATE UI INDIKATOR ONLINE/OFFLINE + LAST SEEN ---
     function updateStatusUI() {
-        const sekarang = Math.floor(Date.now() / 1000);
-        const selisih = sekarang - localLastSeen;
-
         const statusEl = document.getElementById("device-status");
         const pillEl = document.getElementById("device-pill");
         const lastSeenEl = document.getElementById("last-seen-time");
 
-        if (selisih >= 0 && selisih < 20) {
+        // 🛠️ FIX 3: Tahan status 'Checking...' jika baru klik Node (data belum ditarik)
+        if (localLastSeen === 0) {
+            statusEl.innerText = "Checking...";
+            pillEl.style.background = "#e2e8f0";
+            pillEl.style.color = "#64748b";
+            lastSeenEl.style.display = "none";
+            return; 
+        }
+
+        const sekarang = Math.floor(Date.now() / 1000);
+        const selisih = sekarang - localLastSeen;
+
+        // 🛠️ FIX 4: Toleransi waktu diperlebar jadi 40 detik. 
+        // Wemos mengirim detak setiap 10 detik, toleransi 40 detik sangat aman 
+        // walau Wemos sedang sibuk proses hal lain.
+        if (selisih >= 0 && selisih <= 40) {
             statusEl.innerText = "ONLINE"; 
             pillEl.style.background = "#dcfce7"; 
             pillEl.style.color = "#166534";
