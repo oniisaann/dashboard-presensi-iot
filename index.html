@@ -856,6 +856,7 @@
     }
     
     // --- FUNGSI HAPUS ARSIP HARIAN SECARA MANUAL ---
+    // --- FUNGSI HAPUS ARSIP HARIAN SECARA MANUAL ---
     function hapusArsipHarian() {
         let namaSheet = document.getElementById('pilih-tanggal').value;
         if(!namaSheet) return alert("Silakan pilih tanggal arsip yang ingin dihapus terlebih dahulu!");
@@ -863,7 +864,10 @@
         let tanggalBersih = namaSheet.replace('ABSEN_', '');
 
         if (confirm(`⚠️ PERINGATAN: Anda yakin ingin menghapus arsip data tanggal ${tanggalBersih}? Data yang dihapus dari Cloud tidak dapat dikembalikan!`)) {
-            const urlHapus = FIREBASE_URL + "rekap_harian/" + namaSheet + ".json";
+            
+            // 👇 UPDATE: Jalur otomatis ke rekap_harian atau rekap_harian2
+            const urlHapus = FIREBASE_URL + "rekap_harian" + currentNodeSuffix + "/" + namaSheet + ".json";
+            
             fetch(urlHapus, { method: 'DELETE' })
                 .then(res => {
                     if (res.ok) {
@@ -883,7 +887,8 @@
 
     // --- LOGIKA ARSIP GOOGLE SHEETS ---
     function loadDaftarTanggal() {
-        fetch(FIREBASE_URL + "rekap_harian.json")
+        // 👇 UPDATE: Jalur otomatis ke rekap_harian.json atau rekap_harian2.json
+        fetch(FIREBASE_URL + "rekap_harian" + currentNodeSuffix + ".json")
             .then(response => response.json())
             .then(data => {
                 let select = document.getElementById('pilih-tanggal');
@@ -905,7 +910,8 @@
 
         document.getElementById('isi-arsip').innerHTML = "<tr><td>Memuat data...</td></tr>";
 
-        fetch(FIREBASE_URL + "rekap_harian/" + namaSheet + ".json")
+        // 👇 UPDATE: Jalur otomatis ke rekap_harian atau rekap_harian2
+        fetch(FIREBASE_URL + "rekap_harian" + currentNodeSuffix + "/" + namaSheet + ".json")
             .then(response => response.json())
             .then(dataArray => {
                 if(!dataArray) return document.getElementById('isi-arsip').innerHTML = "<tr><td>Data kosong</td></tr>";
@@ -956,12 +962,21 @@
     }
 
     // --- TRANSMISI EMAIL VIA WEB APP INTERMEDIARY ---
+    // --- TRANSMISI EMAIL VIA WEB APP INTERMEDIARY ---
     function kirimKeEmail(tombol) {
         const emailTujuan = document.getElementById('input-email-id').value.trim();
         if(!emailTujuan || !emailTujuan.includes('@')) return alert("Silakan isi alamat Email yang valid!");
         if(dataHarianSaatIni.length === 0) return alert("Silakan klik 'Lihat Data' terlebih dahulu!");
 
-        const urlGoogleScript = "https://script.google.com/macros/s/AKfycbyuxgryfXk0q79ZbNJx_mlotbu-ez7VfWY5hRibIFSAakZwcZrpMkk6GkridoZMZepy/exec";
+        // 👇 LOGIKA BARU: Pilih URL Google Script berdasarkan Node yang sedang dibuka
+        let urlGoogleScript = "";
+        if (currentNodeSuffix === "2") {
+            // URL AppScript Khusus Node 2 (Gerbang Belakang)
+            urlGoogleScript = "https://script.google.com/macros/s/AKfycbyLhgwVaHfcx8R8HgFDm-3Nvm6I4sUoVvuaOhJtA6-jQuvMYoQi5td1-2HSQUCPazhXvg/exec";
+        } else {
+            // URL AppScript Khusus Node 1 (Gerbang Utama)
+            urlGoogleScript = "https://script.google.com/macros/s/AKfycbyuxgryfXk0q79ZbNJx_mlotbu-ez7VfWY5hRibIFSAakZwcZrpMkk6GkridoZMZepy/exec";
+        }
 
         const teksLama = tombol.innerText;
         tombol.innerText = "⏳ Mengirim...";
@@ -972,7 +987,9 @@
             csvContent += rowArray.join(",") + "\r\n";
         });
 
-        const namaFile = document.getElementById('pilih-tanggal').value + ".csv";
+        // Tambahkan keterangan label Node pada nama file yang dikirim via Email
+        let labelNode = currentNodeSuffix === "2" ? "NODE2" : "NODE1";
+        const namaFile = `${document.getElementById('pilih-tanggal').value}_${labelNode}.csv`;
 
         const formData = new URLSearchParams();
         formData.append("email", emailTujuan);
@@ -986,7 +1003,7 @@
         .then(response => response.text()) 
         .then(text => {
             if(text.includes("SUKSES")) {
-                alert("✅ Laporan berhasil meluncur ke: " + emailTujuan);
+                alert(`✅ Laporan (${labelNode}) berhasil meluncur ke: ` + emailTujuan);
                 document.getElementById('input-email-id').value = ""; 
             } else {
                 alert("❌ Google Script menolak: " + text);
