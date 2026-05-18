@@ -9,6 +9,12 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Hapus Rekap Harian
+      - name: Hapus Rekap Harian Semua Node
         run: |
+          # Perintah untuk menghapus folder rekap_harian (Arsip Node 1 - 4)
           curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/rekap_harian.json"
+          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/rekap_harian2.json"
+          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/rekap_harian3.json"
+          curl -X DELETE "https://projectsiswa-d4c27-default-rtdb.asia-southeast1.firebasedatabase.app/rekap_harian4.json"
+          
+          echo "Pembersihan Arsip Mingguan (4 Node) Berhasil!"
