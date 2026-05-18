@@ -298,37 +298,37 @@
 </div>
 
 <div id="node-screen">
-    <h2 style="color: var(--primary); margin-top: 0;">Pilih Gerbang</h2>
-    <p style="color: var(--text-light); font-size: 14px; margin-bottom: 15px;">Silakan pilih node alat yang ingin dipantau</p>
+    <h2 style="color: var(--primary); margin-top: 0;">Pilih Ruang Kelas</h2>
+    <p style="color: var(--text-light); font-size: 14px; margin-bottom: 15px;">Silakan pilih kelas yang ingin dipantau presensinya</p>
     
     <div class="node-grid">
         <button class="node-btn" onclick="pilihNode(1)">
-            🚪 Node 1
-            <span style="font-size:12px; font-weight:normal; color:#64748b;">Gerbang Utama</span>
+            🏫 KELAS X1
+            <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 1)</span>
         </button>
         <button class="node-btn" onclick="pilihNode(2)">
-            🚪 Node 2
-            <span style="font-size:12px; font-weight:normal; color:#64748b;">Gerbang Belakang</span>
+            🏫 KELAS X2
+            <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 2)</span>
         </button>
         <button class="node-btn" onclick="pilihNode(3)">
-            🚪 Node 3
-            <span style="font-size:12px; font-weight:normal; color:#64748b;">Gerbang Samping</span>
+            🏫 KELAS XI
+            <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 3)</span>
         </button>
         <button class="node-btn" onclick="pilihNode(4)">
-            🚪 Node 4
-            <span style="font-size:12px; font-weight:normal; color:#64748b;">Gerbang Parkir</span>
+            🏫 KELAS XII
+            <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 4)</span>
         </button>
     </div>
 
     <div style="margin-top: 25px; text-align: left;">
-        <span style="font-size: 11px; font-weight: bold; color: var(--text-light); letter-spacing: 0.5px;">📋 5 TAP TERAKHIR (REALTIME GABUNGAN)</span>
+        <span style="font-size: 11px; font-weight: bold; color: var(--text-light); letter-spacing: 0.5px;">📋 5 TAP TERAKHIR (SEMUA KELAS)</span>
         <div class="table-container" style="max-height: 180px; margin-top: 8px; background: #fafafa;">
             <table style="font-size: 12px; width: 100%;">
                 <thead>
                     <tr>
                         <th style="padding: 8px;">Nama Siswa</th>
                         <th style="padding: 8px;">Waktu</th>
-                        <th style="padding: 8px; text-align: center;">Node</th>
+                        <th style="padding: 8px; text-align: center;">Kelas</th>
                     </tr>
                 </thead>
                 <tbody id="tabel-terakhir-gabungan">
@@ -352,7 +352,7 @@
                 <div>Device: <span id="device-status">Checking...</span></div>
                 <div id="last-seen-time" style="font-size: 9px; font-weight: normal; margin-top: 2px; display: none;"></div>
             </div>
-            <button class="btn-nav" onclick="gantiNode()">🔄 Ganti Node</button>
+            <button class="btn-nav" onclick="gantiNode()">🔄 Ganti Kelas</button>
             <button class="btn-nav" onclick="bukaMenuArsip()">📂 Arsip G-Sheets</button>
             <button class="btn-logout" onclick="lakukanLogout()">LOGOUT</button>
         </div>
@@ -368,7 +368,7 @@
             </div>
         </div>
         <div style="margin-top: 15px; margin-bottom: 5px;">
-            <input type="text" id="input-cari-siswa" onkeyup="cariSiswa()" placeholder="🔍 Cari nama siswa di live data..." 
+            <input type="text" id="input-cari-siswa" onkeyup="cariSiswa()" placeholder="🔍 Cari nama siswa di kelas ini..." 
                    style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none;">
         </div>
 
@@ -392,7 +392,7 @@
             </div>
 
             <div style="flex: 1; min-width: 220px; max-width: 260px; background: #f8fafc; padding: 20px 15px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: fit-content; align-self: flex-start;">
-                <span style="font-size: 12px; font-weight: bold; color: var(--text-light); margin-bottom: 15px; letter-spacing: 0.5px;">STATISTIK HARI INI</span>
+                <span style="font-size: 12px; font-weight: bold; color: var(--text-light); margin-bottom: 15px; letter-spacing: 0.5px;">STATISTIK KELAS</span>
                 <div style="width: 100%; max-width: 180px; position: relative;">
                     <canvas id="grafikPresensi"></canvas>
                 </div>
@@ -506,7 +506,7 @@
         document.getElementById("node-screen").style.display = "block";
         document.body.style.alignItems = "center"; 
         
-        // 🔄 Nyalakan stream global saat di menu pemilihan node
+        // 🔄 Nyalakan stream global saat di menu pemilihan
         mulaiStreamTapTerakhir();
     }
 
@@ -533,7 +533,6 @@
                     document.getElementById("login-screen").style.display = "none";
                     document.getElementById("node-screen").style.display = "block"; 
                     
-                    // 🔄 Nyalakan stream global saat login sukses
                     mulaiStreamTapTerakhir();
                 } else {
                     document.getElementById("login-error").innerText = "Username atau Password salah!";
@@ -555,7 +554,7 @@
     });
 
     // =========================================================
-    // 📊 LOGIKA BARU: STREAM REALTIME 5 TAP TERAKHIR (4 NODE)
+    // 📊 LOGIKA BARU: STREAM REALTIME 5 TAP TERAKHIR (4 KELAS)
     // =========================================================
     function mulaiStreamTapTerakhir() {
         globalData1 = {}; globalData2 = {}; globalData3 = {}; globalData4 = {};
@@ -563,7 +562,6 @@
         const tbody = document.getElementById('tabel-terakhir-gabungan');
         tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">⏳ Menghubungkan Stream...</td></tr>';
 
-        // Helper untuk parse SSE Firebase
         const parseEvent = (e, dictObj) => {
             const payload = JSON.parse(e.data);
             if (payload.path === "/") {
@@ -599,18 +597,13 @@
     function renderTapTerakhirGabungan() {
         let listGabungan = [];
 
-        // Gabungkan data dari 4 Node
-        Object.keys(globalData1).forEach(key => listGabungan.push({ ...globalData1[key], key: key, labelNode: "Node 1" }));
-        Object.keys(globalData2).forEach(key => listGabungan.push({ ...globalData2[key], key: key, labelNode: "Node 2" }));
-        Object.keys(globalData3).forEach(key => listGabungan.push({ ...globalData3[key], key: key, labelNode: "Node 3" }));
-        Object.keys(globalData4).forEach(key => listGabungan.push({ ...globalData4[key], key: key, labelNode: "Node 4" }));
+        Object.keys(globalData1).forEach(key => listGabungan.push({ ...globalData1[key], key: key, labelNode: "X1" }));
+        Object.keys(globalData2).forEach(key => listGabungan.push({ ...globalData2[key], key: key, labelNode: "X2" }));
+        Object.keys(globalData3).forEach(key => listGabungan.push({ ...globalData3[key], key: key, labelNode: "XI" }));
+        Object.keys(globalData4).forEach(key => listGabungan.push({ ...globalData4[key], key: key, labelNode: "XII" }));
 
-        // Urutkan dari yang paling baru
         listGabungan.sort((a, b) => b.key.localeCompare(a.key));
-        
-        // Ambil 5 teratas
         let limaTerakhir = listGabungan.slice(0, 5);
-
         const tbody = document.getElementById('tabel-terakhir-gabungan');
 
         if (limaTerakhir.length === 0) {
@@ -621,10 +614,11 @@
         let html = '';
         limaTerakhir.forEach(item => {
             let badgeNode = "";
-            if(item.labelNode === "Node 1") badgeNode = `<span style="background:#e0f2fe; color:#0369a1; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 1</span>`;
-            else if(item.labelNode === "Node 2") badgeNode = `<span style="background:#fef3c7; color:#b45309; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 2</span>`;
-            else if(item.labelNode === "Node 3") badgeNode = `<span style="background:#d1fae5; color:#047857; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 3</span>`;
-            else if(item.labelNode === "Node 4") badgeNode = `<span style="background:#f3e8ff; color:#6b21a8; padding:2px 6px; border-radius:4px; font-weight:bold; font-size:10px;">NODE 4</span>`;
+            // LABEL KELAS
+            if(item.labelNode === "X1") badgeNode = `<span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">X1</span>`;
+            else if(item.labelNode === "X2") badgeNode = `<span style="background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">X2</span>`;
+            else if(item.labelNode === "XI") badgeNode = `<span style="background:#d1fae5; color:#047857; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">XI</span>`;
+            else if(item.labelNode === "XII") badgeNode = `<span style="background:#f3e8ff; color:#6b21a8; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">XII</span>`;
             
             let stringJamLengkap = item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu;
             
@@ -639,17 +633,15 @@
         tbody.innerHTML = html;
     }
 
-
-    // --- FUNGSI PEMILIHAN NODE (1, 2, 3, 4) ---
+    // --- FUNGSI PEMILIHAN NODE -> SEKARANG KELAS ---
     function pilihNode(nodeNumber) {
-        // Matikan stream global agar hemat kuota saat masuk ke dashboard utama
         hentikanStreamTapTerakhir();
 
         let titleText = "";
-        if (nodeNumber === 1) { currentNodeSuffix = ""; titleText = "Node 1 - Gerbang Utama"; }
-        else if (nodeNumber === 2) { currentNodeSuffix = "2"; titleText = "Node 2 - Gerbang Belakang"; }
-        else if (nodeNumber === 3) { currentNodeSuffix = "3"; titleText = "Node 3 - Gerbang Samping"; }
-        else if (nodeNumber === 4) { currentNodeSuffix = "4"; titleText = "Node 4 - Gerbang Parkir"; }
+        if (nodeNumber === 1) { currentNodeSuffix = ""; titleText = "Presensi - KELAS X1"; }
+        else if (nodeNumber === 2) { currentNodeSuffix = "2"; titleText = "Presensi - KELAS X2"; }
+        else if (nodeNumber === 3) { currentNodeSuffix = "3"; titleText = "Presensi - KELAS XI"; }
+        else if (nodeNumber === 4) { currentNodeSuffix = "4"; titleText = "Presensi - KELAS XII"; }
 
         document.getElementById("title-node-indicator").innerText = titleText;
         document.getElementById('tabel-data').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan Realtime Stream...</td></tr>';
@@ -734,7 +726,7 @@
     function renderTabelData(data) {
         const tbody = document.getElementById('tabel-data');
         if (!data || Object.keys(data).length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini di Node ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini di kelas ini.</td></tr>';
             document.getElementById('total-absen').innerText = "0";
             updateGrafik(0, 0);
             return;
@@ -841,7 +833,7 @@
     }
 
     function hapusSemua() {
-        if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Node ini?")) {
+        if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Kelas ini?")) {
             fetch(FIREBASE_URL + "data_web" + currentNodeSuffix + ".json", { method: 'DELETE' }).catch(() => alert("Gagal!"));
         }
     }
@@ -864,12 +856,12 @@
         const link = document.createElement("a");
         link.setAttribute("href", URL.createObjectURL(blob));
         
-        let nodeLabel = "1";
-        if (currentNodeSuffix === "2") nodeLabel = "2";
-        else if (currentNodeSuffix === "3") nodeLabel = "3";
-        else if (currentNodeSuffix === "4") nodeLabel = "4";
+        let nodeLabel = "X1";
+        if (currentNodeSuffix === "2") nodeLabel = "X2";
+        else if (currentNodeSuffix === "3") nodeLabel = "XI";
+        else if (currentNodeSuffix === "4") nodeLabel = "XII";
         
-        link.setAttribute("download", `Live_Data_Node${nodeLabel}_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
+        link.setAttribute("download", `Live_Data_KELAS_${nodeLabel}_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
         document.body.appendChild(link); 
         link.click(); 
         document.body.removeChild(link);
@@ -981,21 +973,20 @@
         if(!emailTujuan || !emailTujuan.includes('@')) return alert("Silakan isi alamat Email yang valid!");
         if(dataHarianSaatIni.length === 0) return alert("Silakan klik 'Lihat Data' terlebih dahulu!");
 
-        // URL Google Script Dinamis Berdasarkan Node (Node 3 & 4 Tempat Kosong Untuk Nanti)
         let urlGoogleScript = "";
-        let labelNode = "NODE1";
+        let labelNode = "KELAS_X1";
         
         if (currentNodeSuffix === "2") {
-            labelNode = "NODE2";
+            labelNode = "KELAS_X2";
             urlGoogleScript = "https://script.google.com/macros/s/AKfycbyLhgwVaHfcx8R8HgFDm-3Nvm6I4sUoVvuaOhJtA6-jQuvMYoQi5td1-2HSQUCPazhXvg/exec";
         } else if (currentNodeSuffix === "3") {
-            labelNode = "NODE3";
-            urlGoogleScript = "URL_APPSCRIPT_NODE_3_MENYUSUL"; // <--- Masukkan URL Node 3 di sini nanti
+            labelNode = "KELAS_XI";
+            urlGoogleScript = "URL_APPSCRIPT_NODE_3_MENYUSUL"; 
         } else if (currentNodeSuffix === "4") {
-            labelNode = "NODE4";
-            urlGoogleScript = "URL_APPSCRIPT_NODE_4_MENYUSUL"; // <--- Masukkan URL Node 4 di sini nanti
+            labelNode = "KELAS_XII";
+            urlGoogleScript = "URL_APPSCRIPT_NODE_4_MENYUSUL"; 
         } else {
-            labelNode = "NODE1";
+            labelNode = "KELAS_X1";
             urlGoogleScript = "https://script.google.com/macros/s/AKfycbyuxgryfXk0q79ZbNJx_mlotbu-ez7VfWY5hRibIFSAakZwcZrpMkk6GkridoZMZepy/exec";
         }
 
