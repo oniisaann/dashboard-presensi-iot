@@ -276,8 +276,9 @@
             <p>SMA Muhammadiyah Sumowono</p>
         </div>
         <div class="header-buttons">
-            <div id="device-pill" style="background: #e2e8f0; color: #64748b; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;">
-                Device: <span id="device-status">Checking...</span>
+            <div id="device-pill" style="background: #e2e8f0; color: #64748b; padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; text-align: right; line-height: 1.3;">
+                <div>Device: <span id="device-status">Checking...</span></div>
+                <div id="last-seen-time" style="font-size: 9px; font-weight: normal; margin-top: 2px; display: none;"></div>
             </div>
             <button class="btn-nav" onclick="bukaMenuArsip()">📂 Arsip Google Sheets</button>
             <button class="btn-logout" onclick="lakukanLogout()">LOGOUT</button>
@@ -587,23 +588,50 @@
         cariSiswa(); // Tetap jalankan filter jika user sedang mencari nama tertentu
     }
 
-    // --- FUNGSI UPDATE UI INDIKATOR ONLINE/OFFLINE ---
+    // --- FUNGSI UPDATE UI INDIKATOR ONLINE/OFFLINE + LAST SEEN ---
     function updateStatusUI() {
         const sekarang = Math.floor(Date.now() / 1000);
         const selisih = sekarang - localLastSeen;
 
         const statusEl = document.getElementById("device-status");
         const pillEl = document.getElementById("device-pill");
+        const lastSeenEl = document.getElementById("last-seen-time");
 
-        // Jika tidak ada detak jantung dari alat selama 20 detik, ubah jadi Offline
+        // Jika ada detak jantung dari alat dalam 20 detik terakhir
         if (selisih >= 0 && selisih < 20) {
             statusEl.innerText = "ONLINE"; 
             pillEl.style.background = "#dcfce7"; 
             pillEl.style.color = "#166534";
-        } else {
+            
+            // Sembunyikan teks last seen karena alat sedang aktif
+            lastSeenEl.style.display = "none";
+        } 
+        // Jika alat terdeteksi mati/hilang kontak (Offline)
+        else {
             statusEl.innerText = "OFFLINE"; 
             pillEl.style.background = "#fee2e2"; 
             pillEl.style.color = "#991b1b";
+
+            if (localLastSeen > 0) {
+                // Ubah Timestamp Unix menjadi format tanggal & waktu objek JavaScript
+                // (Dikalikan 1000 karena JavaScript membaca dalam milidetik)
+                const waktuObjek = new Date(localLastSeen * 1000);
+                
+                // Format tanggal menjadi: Hari, DD MM YYYY
+                const opsiTanggal = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
+                const tanggalTeks = waktuObjek.toLocaleDateString('id-ID', opsiTanggal);
+                
+                // Format jam menjadi: HH.MM
+                const jamTeks = waktuObjek.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
+
+                // Tampilkan teks di bawah status OFFLINE
+                lastSeenEl.innerText = `Aktif: ${tanggalTeks} - ${jamTeks} WIB`;
+                lastSeenEl.style.display = "block";
+                lastSeenEl.style.color = "#b91c1c"; // Warna merah gelap agar serasi
+            } else {
+                lastSeenEl.innerText = "Belum pernah aktif";
+                lastSeenEl.style.display = "block";
+            }
         }
     }
 
