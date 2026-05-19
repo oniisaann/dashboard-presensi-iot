@@ -31,8 +31,8 @@
             min-height: 100vh;
         }
         
-        /* --- STYLE UNTUK LOGIN & NODE SELECTION --- */
-        #login-screen, #node-screen {
+        /* --- STYLE UNTUK LOGIN --- */
+        #login-screen {
             background: var(--card); 
             padding: 40px 30px; 
             border-radius: 16px; 
@@ -40,11 +40,6 @@
             width: 100%; 
             max-width: 350px; 
             text-align: center;
-        }
-
-        #node-screen {
-            max-width: 500px;
-            display: none; 
         }
         
         .input-group { 
@@ -85,7 +80,6 @@
             font-weight: bold; 
             cursor: pointer; 
             margin-top: 10px;
-            transition: 0.2s;
         }
         
         .btn-login:hover { 
@@ -97,35 +91,6 @@
             font-size: 13px; 
             margin-top: 10px; 
             display: none; 
-        }
-
-        .node-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .node-btn {
-            background: #f1f5f9;
-            border: 2px solid #cbd5e1;
-            padding: 20px 10px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 15px;
-            font-weight: bold;
-            color: var(--text-dark);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .node-btn:hover {
-            border-color: var(--primary);
-            background: #e0f2fe;
-            color: var(--primary);
         }
 
         /* --- STYLE DASHBOARD & ARSIP --- */
@@ -160,14 +125,13 @@
             margin: 5px 0 0 0; 
             color: var(--text-light); 
             font-size: 13px; 
-            font-weight: bold;
         }
         
+        /* Tombol Navigasi Atas */
         .header-buttons { 
             display: flex; 
             gap: 10px; 
             align-items: center; 
-            flex-wrap: wrap;
         }
         
         .btn-nav { 
@@ -250,13 +214,21 @@
             border-radius: 20px; 
             font-size: 12px; 
             font-weight: bold; 
-            animation: pulse 2s infinite; 
+            animation: pulse 2s infinite; /* Efek kedip untuk menandakan LIVE */
         }
         
         @keyframes pulse {
             0% { opacity: 1; }
             50% { opacity: 0.7; }
             100% { opacity: 1; }
+        }
+        
+        .badge { 
+            font-weight: bold; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            white-space: nowrap; 
         }
         
         .status-realtime { 
@@ -297,63 +269,17 @@
     <div id="login-error">Username atau Password salah!</div>
 </div>
 
-<div id="node-screen">
-    <h2 style="color: var(--primary); margin-top: 0;">Pilih Ruang Kelas</h2>
-    <p style="color: var(--text-light); font-size: 14px; margin-bottom: 15px;">Silakan pilih kelas yang ingin dipantau presensinya</p>
-    
-    <div class="node-grid">
-        <button class="node-btn" onclick="pilihNode(1)">
-            🏫 KELAS X1
-            <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 1)</span>
-        </button>
-        <button class="node-btn" onclick="pilihNode(2)">
-            🏫 KELAS X2
-            <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 2)</span>
-        </button>
-        <button class="node-btn" onclick="pilihNode(3)">
-            🏫 KELAS XI
-            <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 3)</span>
-        </button>
-        <button class="node-btn" onclick="pilihNode(4)">
-            🏫 KELAS XII
-            <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 4)</span>
-        </button>
-    </div>
-
-    <div style="margin-top: 25px; text-align: left;">
-        <span style="font-size: 11px; font-weight: bold; color: var(--text-light); letter-spacing: 0.5px;">📋 5 TAP TERAKHIR (SEMUA KELAS)</span>
-        <div class="table-container" style="max-height: 180px; margin-top: 8px; background: #fafafa;">
-            <table style="font-size: 12px; width: 100%;">
-                <thead>
-                    <tr>
-                        <th style="padding: 8px;">Nama Siswa</th>
-                        <th style="padding: 8px;">Waktu</th>
-                        <th style="padding: 8px; text-align: center;">Kelas</th>
-                    </tr>
-                </thead>
-                <tbody id="tabel-terakhir-gabungan">
-                    <tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">⏳ Menghubungkan Stream...</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <button class="btn-logout" style="margin-top: 25px; width: 100%;" onclick="lakukanLogout()">LOGOUT</button>
-</div>
-
 <div id="dashboard-screen">
     <div class="header">
         <div>
             <h1>☁️ Presensi Cloud</h1>
-            <p id="title-node-indicator">SMA Muhammadiyah Sumowono</p>
+            <p>SMA Muhammadiyah Sumowono</p>
         </div>
         <div class="header-buttons">
-            <div id="device-pill" style="background: #e2e8f0; color: #64748b; padding: 6px 12px; border-radius: 12px; font-size: 11px; font-weight: bold; text-align: right; line-height: 1.3;">
-                <div>Device: <span id="device-status">Checking...</span></div>
-                <div id="last-seen-time" style="font-size: 9px; font-weight: normal; margin-top: 2px; display: none;"></div>
+            <div id="device-pill" style="background: #e2e8f0; color: #64748b; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: bold;">
+                Device: <span id="device-status">Checking...</span>
             </div>
-            <button class="btn-nav" onclick="gantiNode()">🔄 Ganti Kelas</button>
-            <button class="btn-nav" onclick="bukaMenuArsip()">📂 Arsip G-Sheets</button>
+            <button class="btn-nav" onclick="bukaMenuArsip()">📂 Arsip Google Sheets</button>
             <button class="btn-logout" onclick="lakukanLogout()">LOGOUT</button>
         </div>
     </div>
@@ -368,7 +294,7 @@
             </div>
         </div>
         <div style="margin-top: 15px; margin-bottom: 5px;">
-            <input type="text" id="input-cari-siswa" onkeyup="cariSiswa()" placeholder="🔍 Cari nama siswa di kelas ini..." 
+            <input type="text" id="input-cari-siswa" onkeyup="cariSiswa()" placeholder="🔍 Cari nama siswa di live data..." 
                    style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none;">
         </div>
 
@@ -392,7 +318,7 @@
             </div>
 
             <div style="flex: 1; min-width: 220px; max-width: 260px; background: #f8fafc; padding: 20px 15px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: fit-content; align-self: flex-start;">
-                <span style="font-size: 12px; font-weight: bold; color: var(--text-light); margin-bottom: 15px; letter-spacing: 0.5px;">STATISTIK KELAS</span>
+                <span style="font-size: 12px; font-weight: bold; color: var(--text-light); margin-bottom: 15px; letter-spacing: 0.5px;">STATISTIK HARI INI</span>
                 <div style="width: 100%; max-width: 180px; position: relative;">
                     <canvas id="grafikPresensi"></canvas>
                 </div>
@@ -466,27 +392,16 @@
     
     let myChart = null; 
     let timeoutAktivitas; 
-    const WAKTU_TIMEOUT = 10 * 60 * 1000; 
+    const WAKTU_TIMEOUT = 10 * 60 * 1000; // Timer sesi 10 menit
     
-    // Variabel Stream Node Spesifik (Dashboard)
-    // Suffix: "" (Node 1), "2" (Node 2), "3" (Node 3), "4" (Node 4)
-    let currentNodeSuffix = ""; 
+    // Variabel Penampung Data Realtime
     let streamDataWeb = null;
     let streamDevice = null;
     let localDataWeb = {}; 
     let localLastSeen = 0;
     let intervalCekUI = null;
+    
     let dataHarianSaatIni = []; 
-
-    // Variabel Stream Gabungan Global (5 Tap Terakhir)
-    let streamGlobal1 = null;
-    let streamGlobal2 = null;
-    let streamGlobal3 = null;
-    let streamGlobal4 = null;
-    let globalData1 = {};
-    let globalData2 = {};
-    let globalData3 = {};
-    let globalData4 = {};
 
     // --- FUNGSI NAVIGASI ANTAR LAYAR ---
     function bukaMenuArsip() {
@@ -499,18 +414,7 @@
         document.getElementById("dashboard-screen").style.display = "block";
     }
 
-    function gantiNode() {
-        hentikanRealtimeListener(); 
-        document.getElementById("dashboard-screen").style.display = "none";
-        document.getElementById("arsip-screen").style.display = "none";
-        document.getElementById("node-screen").style.display = "block";
-        document.body.style.alignItems = "center"; 
-        
-        // 🔄 Nyalakan stream global saat di menu pemilihan
-        mulaiStreamTapTerakhir();
-    }
-
-    // --- FUNGSI LOGIN ---
+    // --- FUNGSI LOGIN (SINKRONISASI VIA FIREBASE) ---
     function cekLogin() {
         const user = document.getElementById("in-user").value;
         const pass = document.getElementById("in-pass").value;
@@ -531,9 +435,13 @@
                 if (data && user === data.username && pass === data.password) {
                     document.getElementById("login-error").style.display = "none";
                     document.getElementById("login-screen").style.display = "none";
-                    document.getElementById("node-screen").style.display = "block"; 
+                    document.getElementById("dashboard-screen").style.display = "block";
                     
-                    mulaiStreamTapTerakhir();
+                    document.body.style.alignItems = "flex-start"; 
+                    
+                    mulaiRealtimeListener(); // 🚀 Memulai mode ONVALUE (Push Notif)
+                    loadDaftarTanggal(); 
+                    resetTimerTimeout(); 
                 } else {
                     document.getElementById("login-error").innerText = "Username atau Password salah!";
                     document.getElementById("login-error").style.display = "block";
@@ -553,112 +461,9 @@
         if (event.key === "Enter") cekLogin();
     });
 
-    // =========================================================
-    // 📊 LOGIKA BARU: STREAM REALTIME 5 TAP TERAKHIR (4 KELAS)
-    // =========================================================
-    function mulaiStreamTapTerakhir() {
-        globalData1 = {}; globalData2 = {}; globalData3 = {}; globalData4 = {};
-        
-        const tbody = document.getElementById('tabel-terakhir-gabungan');
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">⏳ Menghubungkan Stream...</td></tr>';
-
-        const parseEvent = (e, dictObj) => {
-            const payload = JSON.parse(e.data);
-            if (payload.path === "/") {
-                Object.assign(dictObj, payload.data || {});
-            } else {
-                const key = payload.path.replace("/", "");
-                if (payload.data === null) delete dictObj[key];
-                else dictObj[key] = payload.data;
-            }
-            renderTapTerakhirGabungan();
-        };
-
-        streamGlobal1 = new EventSource(FIREBASE_URL + "data_web.json");
-        streamGlobal1.addEventListener('put', e => parseEvent(e, globalData1));
-
-        streamGlobal2 = new EventSource(FIREBASE_URL + "data_web2.json");
-        streamGlobal2.addEventListener('put', e => parseEvent(e, globalData2));
-
-        streamGlobal3 = new EventSource(FIREBASE_URL + "data_web3.json");
-        streamGlobal3.addEventListener('put', e => parseEvent(e, globalData3));
-
-        streamGlobal4 = new EventSource(FIREBASE_URL + "data_web4.json");
-        streamGlobal4.addEventListener('put', e => parseEvent(e, globalData4));
-    }
-
-    function hentikanStreamTapTerakhir() {
-        if (streamGlobal1) streamGlobal1.close();
-        if (streamGlobal2) streamGlobal2.close();
-        if (streamGlobal3) streamGlobal3.close();
-        if (streamGlobal4) streamGlobal4.close();
-    }
-
-    function renderTapTerakhirGabungan() {
-        let listGabungan = [];
-
-        Object.keys(globalData1).forEach(key => listGabungan.push({ ...globalData1[key], key: key, labelNode: "X1" }));
-        Object.keys(globalData2).forEach(key => listGabungan.push({ ...globalData2[key], key: key, labelNode: "X2" }));
-        Object.keys(globalData3).forEach(key => listGabungan.push({ ...globalData3[key], key: key, labelNode: "XI" }));
-        Object.keys(globalData4).forEach(key => listGabungan.push({ ...globalData4[key], key: key, labelNode: "XII" }));
-
-        listGabungan.sort((a, b) => b.key.localeCompare(a.key));
-        let limaTerakhir = listGabungan.slice(0, 5);
-        const tbody = document.getElementById('tabel-terakhir-gabungan');
-
-        if (limaTerakhir.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 15px;">Belum ada riwayat presensi hari ini.</td></tr>';
-            return;
-        }
-
-        let html = '';
-        limaTerakhir.forEach(item => {
-            let badgeNode = "";
-            // LABEL KELAS
-            if(item.labelNode === "X1") badgeNode = `<span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">X1</span>`;
-            else if(item.labelNode === "X2") badgeNode = `<span style="background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">X2</span>`;
-            else if(item.labelNode === "XI") badgeNode = `<span style="background:#d1fae5; color:#047857; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">XI</span>`;
-            else if(item.labelNode === "XII") badgeNode = `<span style="background:#f3e8ff; color:#6b21a8; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">XII</span>`;
-            
-            let stringJamLengkap = item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu;
-            
-            html += `
-                <tr>
-                    <td style="font-weight:600; padding:8px;">${item.nama}</td>
-                    <td style="color:#64748b; padding:8px;">${stringJamLengkap}</td>
-                    <td style="text-align:center; padding:8px;">${badgeNode}</td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
-    }
-
-    // --- FUNGSI PEMILIHAN NODE -> SEKARANG KELAS ---
-    function pilihNode(nodeNumber) {
-        hentikanStreamTapTerakhir();
-
-        let titleText = "";
-        if (nodeNumber === 1) { currentNodeSuffix = ""; titleText = "Presensi - KELAS X1"; }
-        else if (nodeNumber === 2) { currentNodeSuffix = "2"; titleText = "Presensi - KELAS X2"; }
-        else if (nodeNumber === 3) { currentNodeSuffix = "3"; titleText = "Presensi - KELAS XI"; }
-        else if (nodeNumber === 4) { currentNodeSuffix = "4"; titleText = "Presensi - KELAS XII"; }
-
-        document.getElementById("title-node-indicator").innerText = titleText;
-        document.getElementById('tabel-data').innerHTML = '<tr><td colspan="4" style="text-align: center; color: #94a3b8;">Menghubungkan Realtime Stream...</td></tr>';
-        
-        document.getElementById("node-screen").style.display = "none";
-        document.getElementById("dashboard-screen").style.display = "block";
-        document.body.style.alignItems = "flex-start"; 
-        
-        mulaiRealtimeListener(); 
-        loadDaftarTanggal(); 
-        resetTimerTimeout(); 
-    }
-
     // --- FUNGSI LOGOUT ---
     function lakukanLogout() {
-        hentikanRealtimeListener(); 
-        hentikanStreamTapTerakhir(); 
+        hentikanRealtimeListener(); // ⏹️ Matikan koneksi streaming jika logout
         clearTimeout(timeoutAktivitas);
         
         document.getElementById("in-user").value = "";
@@ -667,26 +472,25 @@
         
         document.getElementById("dashboard-screen").style.display = "none";
         document.getElementById("arsip-screen").style.display = "none";
-        document.getElementById("node-screen").style.display = "none";
         document.getElementById("login-screen").style.display = "block";
         document.body.style.alignItems = "center"; 
     }
 
     // =========================================================
-    // 🚀 SISTEM REALTIME LISTENER DASHBOARD
+    // 🚀 SISTEM BARU: REALTIME LISTENER (SERVER-SENT EVENTS)
+    // Berfungsi layaknya `onValue` tanpa perlu import Firebase SDK
     // =========================================================
     function mulaiRealtimeListener() {
-        localDataWeb = {}; 
-        localLastSeen = 0; 
-        updateStatusUI();  
-        
-        streamDataWeb = new EventSource(FIREBASE_URL + "data_web" + currentNodeSuffix + ".json");
+        // 1. Listener Tabel Data Absen
+        streamDataWeb = new EventSource(FIREBASE_URL + "data_web.json");
         streamDataWeb.addEventListener('put', function(e) {
             const payload = JSON.parse(e.data);
             
+            // payload.path == "/" berarti sinkronisasi awal (semua data masuk sekaligus)
             if (payload.path === "/") {
                 localDataWeb = payload.data || {};
             } 
+            // Update delta/parsial (jika ada yg dihapus/ditambah)
             else {
                 const key = payload.path.replace("/", "");
                 if (payload.data === null) {
@@ -695,16 +499,19 @@
                     localDataWeb[key] = payload.data;
                 }
             }
+            
+            // Refresh tabel tanpa perlu request ulang ke server
             renderTabelData(localDataWeb);
         });
 
-        streamDevice = new EventSource(FIREBASE_URL + "device_status" + currentNodeSuffix + ".json");
+        // 2. Listener Status Device Online/Offline
+        streamDevice = new EventSource(FIREBASE_URL + "device_status.json");
         streamDevice.addEventListener('put', function(e) {
             const payload = JSON.parse(e.data);
             
             if (payload.path === "/") {
                 if (payload.data && payload.data.last_seen) {
-                    localLastSeen = payload.data.last_seen - 25200; 
+                    localLastSeen = payload.data.last_seen - 25200; // Koreksi zona waktu jika perlu
                 }
             } else if (payload.path === "/last_seen") {
                 localLastSeen = payload.data - 25200;
@@ -712,7 +519,7 @@
             updateStatusUI();
         });
 
-        if (intervalCekUI) clearInterval(intervalCekUI);
+        // Pengecekan lokal untuk indikator Offline jika Wemos mendadak mati (tanpa sedot kuota API)
         intervalCekUI = setInterval(updateStatusUI, 5000);
     }
 
@@ -722,11 +529,11 @@
         if (intervalCekUI) clearInterval(intervalCekUI);
     }
 
-    // --- FUNGSI RENDER TABEL ---
+    // --- FUNGSI RENDER TABEL (Dipanggil otomatis oleh Listener) ---
     function renderTabelData(data) {
         const tbody = document.getElementById('tabel-data');
         if (!data || Object.keys(data).length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini di kelas ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Belum ada data absensi hari ini.</td></tr>';
             document.getElementById('total-absen').innerText = "0";
             updateGrafik(0, 0);
             return;
@@ -777,68 +584,46 @@
         tbody.innerHTML = html;
         
         updateGrafik(jumlahHadir, jumlahTerlambat);
-        cariSiswa(); 
+        cariSiswa(); // Tetap jalankan filter jika user sedang mencari nama tertentu
     }
 
-    // --- FUNGSI UPDATE UI INDIKATOR ONLINE/OFFLINE + LAST SEEN ---
+    // --- FUNGSI UPDATE UI INDIKATOR ONLINE/OFFLINE ---
     function updateStatusUI() {
-        const statusEl = document.getElementById("device-status");
-        const pillEl = document.getElementById("device-pill");
-        const lastSeenEl = document.getElementById("last-seen-time");
-
-        if (localLastSeen === 0) {
-            statusEl.innerText = "Checking...";
-            pillEl.style.background = "#e2e8f0";
-            pillEl.style.color = "#64748b";
-            lastSeenEl.style.display = "none";
-            return; 
-        }
-
         const sekarang = Math.floor(Date.now() / 1000);
         const selisih = sekarang - localLastSeen;
 
-        if (selisih >= -60 && selisih <= 60) {
+        const statusEl = document.getElementById("device-status");
+        const pillEl = document.getElementById("device-pill");
+
+        // Jika tidak ada detak jantung dari alat selama 20 detik, ubah jadi Offline
+        if (selisih >= 0 && selisih < 20) {
             statusEl.innerText = "ONLINE"; 
             pillEl.style.background = "#dcfce7"; 
             pillEl.style.color = "#166534";
-            lastSeenEl.style.display = "none";
-        } 
-        else {
+        } else {
             statusEl.innerText = "OFFLINE"; 
             pillEl.style.background = "#fee2e2"; 
             pillEl.style.color = "#991b1b";
-
-            if (localLastSeen > 0) {
-                const waktuObjek = new Date(localLastSeen * 1000);
-                const opsiTanggal = { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' };
-                const tanggalTeks = waktuObjek.toLocaleDateString('id-ID', opsiTanggal);
-                const jamTeks = waktuObjek.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }).replace(':', '.');
-
-                lastSeenEl.innerText = `Aktif: ${tanggalTeks} - ${jamTeks} WIB`;
-                lastSeenEl.style.display = "block";
-                lastSeenEl.style.color = "#b91c1c"; 
-            } else {
-                lastSeenEl.innerText = "Belum pernah aktif";
-                lastSeenEl.style.display = "block";
-            }
         }
     }
 
     // --- FUNGSI HAPUS DATA LIVE ---
     function hapusSatu(key) {
+        // Cukup kirim perintah DELETE, tabel akan refresh otomatis oleh Listener!
         if (confirm("Apakah Anda yakin ingin menghapus data presensi ini?")) {
-            const urlHapus = FIREBASE_URL + `data_web${currentNodeSuffix}/${key}.json`;
+            const urlHapus = FIREBASE_URL + `data_web/${key}.json`;
             fetch(urlHapus, { method: 'DELETE' }).catch(() => alert("Gagal!"));
         }
     }
 
+    // --- FUNGSI HAPUS MASSAL ---
     function hapusSemua() {
-        if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Kelas ini?")) {
-            fetch(FIREBASE_URL + "data_web" + currentNodeSuffix + ".json", { method: 'DELETE' }).catch(() => alert("Gagal!"));
+        if (confirm("⚠️ PERINGATAN: Apakah Anda yakin ingin menghapus SELURUH riwayat presensi di Cloud?")) {
+            fetch(FIREBASE_URL + "data_web.json", { method: 'DELETE' }).catch(() => alert("Gagal!"));
         }
     }
 
-    // --- DOWNLOAD CSV (LIVE DATA) ---
+    // --- DOWNLOAD CSV (LIVE DATA) - Sekarang sinkron tanpa loading! ---
     function downloadCSV() {
         if (Object.keys(localDataWeb).length === 0) return alert("Tidak ada data untuk diunduh!");
         
@@ -855,13 +640,7 @@
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         link.setAttribute("href", URL.createObjectURL(blob));
-        
-        let nodeLabel = "X1";
-        if (currentNodeSuffix === "2") nodeLabel = "X2";
-        else if (currentNodeSuffix === "3") nodeLabel = "XI";
-        else if (currentNodeSuffix === "4") nodeLabel = "XII";
-        
-        link.setAttribute("download", `Live_Data_KELAS_${nodeLabel}_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
+        link.setAttribute("download", `Live_Data_${new Date().toLocaleDateString('id-ID').replace(/\//g, '-')}.csv`);
         document.body.appendChild(link); 
         link.click(); 
         document.body.removeChild(link);
@@ -872,16 +651,25 @@
         let namaSheet = document.getElementById('pilih-tanggal').value;
         if(!namaSheet) return alert("Silakan pilih tanggal arsip yang ingin dihapus terlebih dahulu!");
 
+        // Ekstrak nama tanggal agar pop-up lebih enak dibaca (contoh: 17May2026)
         let tanggalBersih = namaSheet.replace('ABSEN_', '');
 
         if (confirm(`⚠️ PERINGATAN: Anda yakin ingin menghapus arsip data tanggal ${tanggalBersih}? Data yang dihapus dari Cloud tidak dapat dikembalikan!`)) {
-            const urlHapus = FIREBASE_URL + "rekap_harian" + currentNodeSuffix + "/" + namaSheet + ".json";
+            
+            const urlHapus = FIREBASE_URL + "rekap_harian/" + namaSheet + ".json";
+            
             fetch(urlHapus, { method: 'DELETE' })
                 .then(res => {
                     if (res.ok) {
                         alert(`✅ Arsip tanggal ${tanggalBersih} berhasil dihapus!`);
+                        
+                        // 1. Refresh isi dropdown tanggal (agar tanggal yang dihapus hilang)
                         loadDaftarTanggal(); 
+                        
+                        // 2. Kosongkan tampilan tabel di layar
                         document.getElementById('isi-arsip').innerHTML = '<tr><td style="padding: 30px; color: #94a3b8;">Silakan pilih tanggal dan klik "Lihat Data"</td></tr>';
+                        
+                        // 3. Kosongkan memori variabel lokal agar tidak bocor jika di-download
                         dataHarianSaatIni = []; 
                     } else {
                         alert("❌ Gagal menghapus arsip!");
@@ -895,7 +683,7 @@
 
     // --- LOGIKA ARSIP GOOGLE SHEETS ---
     function loadDaftarTanggal() {
-        fetch(FIREBASE_URL + "rekap_harian" + currentNodeSuffix + ".json")
+        fetch(FIREBASE_URL + "rekap_harian.json")
             .then(response => response.json())
             .then(data => {
                 let select = document.getElementById('pilih-tanggal');
@@ -917,7 +705,7 @@
 
         document.getElementById('isi-arsip').innerHTML = "<tr><td>Memuat data...</td></tr>";
 
-        fetch(FIREBASE_URL + "rekap_harian" + currentNodeSuffix + "/" + namaSheet + ".json")
+        fetch(FIREBASE_URL + "rekap_harian/" + namaSheet + ".json")
             .then(response => response.json())
             .then(dataArray => {
                 if(!dataArray) return document.getElementById('isi-arsip').innerHTML = "<tr><td>Data kosong</td></tr>";
@@ -973,26 +761,7 @@
         if(!emailTujuan || !emailTujuan.includes('@')) return alert("Silakan isi alamat Email yang valid!");
         if(dataHarianSaatIni.length === 0) return alert("Silakan klik 'Lihat Data' terlebih dahulu!");
 
-        let urlGoogleScript = "";
-        let labelNode = "KELAS_X1";
-        
-        if (currentNodeSuffix === "2") {
-            labelNode = "KELAS_X2";
-            urlGoogleScript = "https://script.google.com/macros/s/AKfycbyLhgwVaHfcx8R8HgFDm-3Nvm6I4sUoVvuaOhJtA6-jQuvMYoQi5td1-2HSQUCPazhXvg/exec";
-        } else if (currentNodeSuffix === "3") {
-            labelNode = "KELAS_XI";
-            urlGoogleScript = "URL_APPSCRIPT_NODE_3_MENYUSUL"; 
-        } else if (currentNodeSuffix === "4") {
-            labelNode = "KELAS_XII";
-            urlGoogleScript = "URL_APPSCRIPT_NODE_4_MENYUSUL"; 
-        } else {
-            labelNode = "KELAS_X1";
-            urlGoogleScript = "https://script.google.com/macros/s/AKfycbyuxgryfXk0q79ZbNJx_mlotbu-ez7VfWY5hRibIFSAakZwcZrpMkk6GkridoZMZepy/exec";
-        }
-
-        if (urlGoogleScript.includes("MENYUSUL")) {
-            return alert(`URL AppScript untuk ${labelNode} belum dikonfigurasi!`);
-        }
+        const urlGoogleScript = "https://script.google.com/macros/s/AKfycbyuxgryfXk0q79ZbNJx_mlotbu-ez7VfWY5hRibIFSAakZwcZrpMkk6GkridoZMZepy/exec";
 
         const teksLama = tombol.innerText;
         tombol.innerText = "⏳ Mengirim...";
@@ -1003,7 +772,7 @@
             csvContent += rowArray.join(",") + "\r\n";
         });
 
-        const namaFile = `${document.getElementById('pilih-tanggal').value}_${labelNode}.csv`;
+        const namaFile = document.getElementById('pilih-tanggal').value + ".csv";
 
         const formData = new URLSearchParams();
         formData.append("email", emailTujuan);
@@ -1017,7 +786,7 @@
         .then(response => response.text()) 
         .then(text => {
             if(text.includes("SUKSES")) {
-                alert(`✅ Laporan (${labelNode}) berhasil meluncur ke: ` + emailTujuan);
+                alert("✅ Laporan berhasil meluncur ke: " + emailTujuan);
                 document.getElementById('input-email-id').value = ""; 
             } else {
                 alert("❌ Google Script menolak: " + text);
