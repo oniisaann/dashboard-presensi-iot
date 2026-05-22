@@ -1056,10 +1056,6 @@
             urlGoogleScript = "https://script.google.com/macros/s/AKfycbwiF2-PSaTRleUS7QUqodDDMj8ldvlr-PNq_EgL73UsOI8ryLDLX7aYcSTRO18scLz6/exec";
         }
 
-        if (urlGoogleScript.includes("MENYUSUL")) {
-            return alert(`URL AppScript untuk ${labelNode} belum dikonfigurasi!`);
-        }
-
         const teksLama = tombol.innerText;
         tombol.innerText = "⏳ Mengirim...";
         tombol.disabled = true;
