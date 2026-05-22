@@ -109,7 +109,7 @@
         .node-btn {
             background: #f1f5f9;
             border: 2px solid #cbd5e1;
-            padding: 20px 10px;
+            padding: 15px 10px;
             border-radius: 12px;
             cursor: pointer;
             transition: 0.3s;
@@ -276,6 +276,18 @@
             font-size: 11px; 
             font-weight: bold; 
         }
+
+        /* Badge Tambahan untuk Menu Utama */
+        .badge { 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-size: 11px; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            white-space: nowrap; 
+        }
+        .online { background: #dcfce7; color: var(--success); } 
+        .offline { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
@@ -305,18 +317,22 @@
         <button class="node-btn" onclick="pilihNode(1)">
             🏫 KELAS X1
             <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 1)</span>
+            <span id="badge-status-1" class="badge offline" style="margin-top:5px; font-size:9px;">Checking...</span>
         </button>
         <button class="node-btn" onclick="pilihNode(2)">
             🏫 KELAS X2
             <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 2)</span>
+            <span id="badge-status-2" class="badge offline" style="margin-top:5px; font-size:9px;">Checking...</span>
         </button>
         <button class="node-btn" onclick="pilihNode(3)">
             🏫 KELAS XI
             <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 3)</span>
+            <span id="badge-status-3" class="badge offline" style="margin-top:5px; font-size:9px;">Checking...</span>
         </button>
         <button class="node-btn" onclick="pilihNode(4)">
             🏫 KELAS XII
             <span style="font-size:12px; font-weight:normal; color:#64748b;">(Node 4)</span>
+            <span id="badge-status-4" class="badge offline" style="margin-top:5px; font-size:9px;">Checking...</span>
         </button>
     </div>
 
@@ -469,7 +485,6 @@
     const WAKTU_TIMEOUT = 10 * 60 * 1000; 
     
     // Variabel Stream Node Spesifik (Dashboard)
-    // Suffix: "" (Node 1), "2" (Node 2), "3" (Node 3), "4" (Node 4)
     let currentNodeSuffix = ""; 
     let streamDataWeb = null;
     let streamDevice = null;
@@ -487,6 +502,9 @@
     let globalData2 = {};
     let globalData3 = {};
     let globalData4 = {};
+
+    // 👇 FITUR BARU: Variabel interval pengecekan status perangkat di menu
+    let intervalStatusMenu = null;
 
     // --- FUNGSI NAVIGASI ANTAR LAYAR ---
     function bukaMenuArsip() {
@@ -506,8 +524,11 @@
         document.getElementById("node-screen").style.display = "block";
         document.body.style.alignItems = "center"; 
         
-        // 🔄 Nyalakan stream global saat di menu pemilihan
         mulaiStreamTapTerakhir();
+        // 🔄 Mulai periksa status online/offline semua alat
+        cekSemuaStatusAlat();
+        if(intervalStatusMenu) clearInterval(intervalStatusMenu);
+        intervalStatusMenu = setInterval(cekSemuaStatusAlat, 5000);
     }
 
     // --- FUNGSI LOGIN ---
@@ -534,6 +555,11 @@
                     document.getElementById("node-screen").style.display = "block"; 
                     
                     mulaiStreamTapTerakhir();
+                    
+                    // 🔄 Mulai periksa status online/offline semua alat
+                    cekSemuaStatusAlat();
+                    if(intervalStatusMenu) clearInterval(intervalStatusMenu);
+                    intervalStatusMenu = setInterval(cekSemuaStatusAlat, 5000);
                 } else {
                     document.getElementById("login-error").innerText = "Username atau Password salah!";
                     document.getElementById("login-error").style.display = "block";
@@ -552,6 +578,45 @@
     document.getElementById("in-pass").addEventListener("keypress", function(event) {
         if (event.key === "Enter") cekLogin();
     });
+
+    // 👇 FITUR BARU: FUNGSI CEK STATUS SEMUA ALAT DI MENU AWAL
+    function cekSemuaStatusAlat() {
+        const nodes = [
+            { id: 1, suffix: "" },
+            { id: 2, suffix: "2" },
+            { id: 3, suffix: "3" },
+            { id: 4, suffix: "4" }
+        ];
+        
+        const sekarang = Math.floor(Date.now() / 1000);
+
+        nodes.forEach(node => {
+            fetch(FIREBASE_URL + "device_status" + node.suffix + ".json")
+                .then(res => res.json())
+                .then(data => {
+                    const badge = document.getElementById("badge-status-" + node.id);
+                    if(data && data.last_seen) {
+                        const lastSeen = data.last_seen - 25200; // Penyesuaian zona waktu WIB
+                        const selisih = sekarang - lastSeen;
+                        
+                        if(selisih >= -60 && selisih <= 60) {
+                            badge.className = "badge online";
+                            badge.innerText = "ONLINE";
+                        } else {
+                            badge.className = "badge offline";
+                            badge.innerText = "OFFLINE";
+                        }
+                    } else {
+                        badge.className = "badge offline";
+                        badge.innerText = "OFFLINE";
+                    }
+                }).catch(() => {
+                    const badge = document.getElementById("badge-status-" + node.id);
+                    badge.className = "badge offline";
+                    badge.innerText = "ERROR";
+                });
+        });
+    }
 
     // =========================================================
     // 📊 LOGIKA BARU: STREAM REALTIME 5 TAP TERAKHIR (4 KELAS)
@@ -614,7 +679,6 @@
         let html = '';
         limaTerakhir.forEach(item => {
             let badgeNode = "";
-            // LABEL KELAS
             if(item.labelNode === "X1") badgeNode = `<span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">X1</span>`;
             else if(item.labelNode === "X2") badgeNode = `<span style="background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">X2</span>`;
             else if(item.labelNode === "XI") badgeNode = `<span style="background:#d1fae5; color:#047857; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">XI</span>`;
@@ -633,9 +697,10 @@
         tbody.innerHTML = html;
     }
 
-    // --- FUNGSI PEMILIHAN NODE -> SEKARANG KELAS ---
+    // --- FUNGSI PEMILIHAN KELAS ---
     function pilihNode(nodeNumber) {
         hentikanStreamTapTerakhir();
+        if(intervalStatusMenu) clearInterval(intervalStatusMenu); // Matikan loop cek status menu
 
         let titleText = "";
         if (nodeNumber === 1) { currentNodeSuffix = ""; titleText = "Presensi - KELAS X1"; }
@@ -659,6 +724,7 @@
     function lakukanLogout() {
         hentikanRealtimeListener(); 
         hentikanStreamTapTerakhir(); 
+        if(intervalStatusMenu) clearInterval(intervalStatusMenu); // Matikan loop cek status menu
         clearTimeout(timeoutAktivitas);
         
         document.getElementById("in-user").value = "";
