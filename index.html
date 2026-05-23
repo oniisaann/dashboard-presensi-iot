@@ -619,8 +619,23 @@
     }
 
     // =========================================================
-    // 📊 LOGIKA BARU: STREAM REALTIME 5 TAP TERAKHIR (4 KELAS)
+    // 📊 LOGIKA BARU: STREAM REALTIME 5 TAP TERAKHIR (DIPERBAIKI)
     // =========================================================
+
+    // Fungsi bantu untuk mengubah string "DD/MM/YYYY HH:mm:ss" menjadi angka waktu absolut (Timestamp)
+    function parseWaktuAbsen(waktuStr) {
+        if (!waktuStr) return 0;
+        let parts = waktuStr.split(" ");
+        if (parts.length !== 2) return 0;
+        let tgl = parts[0].split("/");
+        let jam = parts[1].split(":");
+        if (tgl.length !== 3 || jam.length !== 3) return 0;
+        
+        // Format: Date(Tahun, Bulan [0-11], Tanggal, Jam, Menit, Detik)
+        let dateObj = new Date(tgl[2], tgl[1] - 1, tgl[0], jam[0], jam[1], jam[2]);
+        return dateObj.getTime();
+    }
+
     function mulaiStreamTapTerakhir() {
         globalData1 = {}; globalData2 = {}; globalData3 = {}; globalData4 = {};
         
@@ -639,16 +654,19 @@
             renderTapTerakhirGabungan();
         };
 
-        streamGlobal1 = new EventSource(FIREBASE_URL + "data_web.json");
+        // BUGS FIXED 1: Batasi tarikan data hanya 10 terakhir dari Firebase agar RAM tidak penuh
+        const queryParams = '?orderBy="$key"&limitToLast=10';
+
+        streamGlobal1 = new EventSource(FIREBASE_URL + "data_web.json" + queryParams);
         streamGlobal1.addEventListener('put', e => parseEvent(e, globalData1));
 
-        streamGlobal2 = new EventSource(FIREBASE_URL + "data_web2.json");
+        streamGlobal2 = new EventSource(FIREBASE_URL + "data_web2.json" + queryParams);
         streamGlobal2.addEventListener('put', e => parseEvent(e, globalData2));
 
-        streamGlobal3 = new EventSource(FIREBASE_URL + "data_web3.json");
+        streamGlobal3 = new EventSource(FIREBASE_URL + "data_web3.json" + queryParams);
         streamGlobal3.addEventListener('put', e => parseEvent(e, globalData3));
 
-        streamGlobal4 = new EventSource(FIREBASE_URL + "data_web4.json");
+        streamGlobal4 = new EventSource(FIREBASE_URL + "data_web4.json" + queryParams);
         streamGlobal4.addEventListener('put', e => parseEvent(e, globalData4));
     }
 
@@ -667,7 +685,14 @@
         Object.keys(globalData3).forEach(key => listGabungan.push({ ...globalData3[key], key: key, labelNode: "XI" }));
         Object.keys(globalData4).forEach(key => listGabungan.push({ ...globalData4[key], key: key, labelNode: "XII" }));
 
-        listGabungan.sort((a, b) => b.key.localeCompare(a.key));
+        // BUGS FIXED 2: Urutkan berdasarkan Waktu Nyata, BUKAN berdasarkan ID acak Firebase
+        listGabungan.sort((a, b) => {
+            let timeA = parseWaktuAbsen(a.waktu);
+            let timeB = parseWaktuAbsen(b.waktu);
+            return timeB - timeA; // Descending: Waktu paling baru di posisi atas
+        });
+
+        // Ambil murni 5 teratas
         let limaTerakhir = listGabungan.slice(0, 5);
         const tbody = document.getElementById('tabel-terakhir-gabungan');
 
@@ -684,6 +709,7 @@
             else if(item.labelNode === "XI") badgeNode = `<span style="background:#d1fae5; color:#047857; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">XI</span>`;
             else if(item.labelNode === "XII") badgeNode = `<span style="background:#f3e8ff; color:#6b21a8; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:10px;">XII</span>`;
             
+            // Format waktu menjadi Jam saja jika hari ini
             let stringJamLengkap = item.waktu.includes(" ") ? item.waktu.split(" ")[1] : item.waktu;
             
             html += `
@@ -696,7 +722,6 @@
         });
         tbody.innerHTML = html;
     }
-
     // --- FUNGSI PEMILIHAN KELAS ---
     function pilihNode(nodeNumber) {
         hentikanStreamTapTerakhir();
